@@ -1,5 +1,5 @@
 /* Yape PWA Service Worker - safe startup + offline support */
-const CACHE_VERSION = 'yape-shell-v20260405-clean-safe-area-global';
+const CACHE_VERSION = 'yape-shell-v20260405-safearea-clean4';
 const PRECACHE_NAME = `yape-precache-${CACHE_VERSION}`;
 const RUNTIME_NAME  = `yape-runtime-${CACHE_VERSION}`;
 
