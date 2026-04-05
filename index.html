@@ -7,7 +7,7 @@
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest?v=statusbar-v3">
+  <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#742284" id="appThemeColorMeta">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1317,113 +1317,6 @@ h1,h2,h3,.title,.contact-name{
 
   window.addEventListener("pageshow", scheduleHide, { once:true });
   setTimeout(doHide, MAX_MS);
-})();
-</script>
-
-<script>
-(function(){
-  var SHELL_THEMES = {
-    home: {
-      screen: "home",
-      color: "#742284",
-      background: "#742284"
-    },
-    voucher: {
-      screen: "voucher",
-      color: "#4f1768",
-      background: "linear-gradient(180deg, #4f1768 0%, #6a238a 100%)"
-    }
-  };
-
-  function ensureThemeMeta(){
-    var meta = document.getElementById("appThemeColorMeta") || document.querySelector('meta[name="theme-color"]');
-    if(!meta){
-      meta = document.createElement("meta");
-      meta.name = "theme-color";
-      meta.id = "appThemeColorMeta";
-      document.head.appendChild(meta);
-    }
-    return meta;
-  }
-
-  function ensureShellOverlay(){
-    var overlay = document.getElementById("pwaStatusBarShellBg");
-    if(overlay) return overlay;
-    overlay = document.createElement("div");
-    overlay.id = "pwaStatusBarShellBg";
-    overlay.setAttribute("aria-hidden", "true");
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.right = "0";
-    overlay.style.height = "calc(env(safe-area-inset-top, 0px) + 34px)";
-    overlay.style.pointerEvents = "none";
-    overlay.style.zIndex = "2147483646";
-    overlay.style.backgroundRepeat = "no-repeat";
-    overlay.style.backgroundSize = "100% 100%";
-    overlay.style.backgroundPosition = "top center";
-    try{ document.body.appendChild(overlay); }catch(e){}
-    return overlay;
-  }
-
-  function resolveShellTheme(payload){
-    var screen = payload && typeof payload.screen === "string" ? payload.screen.toLowerCase() : "home";
-    if(screen === "voucher" || screen === "baucher" || screen === "comprobante") screen = "voucher";
-    var base = SHELL_THEMES[screen] || SHELL_THEMES.home;
-    return {
-      screen: base.screen,
-      color: payload && typeof payload.color === "string" && payload.color.trim() ? payload.color.trim() : base.color,
-      background: payload && typeof payload.background === "string" && payload.background.trim() ? payload.background.trim() : base.background
-    };
-  }
-
-  function applyBackground(target, background){
-    if(!target) return;
-    target.style.background = background;
-    target.style.backgroundImage = background.indexOf("gradient(") !== -1 ? background : "none";
-    target.style.backgroundRepeat = "no-repeat";
-    target.style.backgroundSize = "100% 100%";
-    target.style.backgroundPosition = "top center";
-  }
-
-  function applyShellTheme(payload){
-    var theme = resolveShellTheme(payload);
-    var meta = ensureThemeMeta();
-    if(meta.getAttribute("content") !== theme.color){
-      meta.setAttribute("content", theme.color);
-    }
-
-    document.documentElement.style.setProperty("--shell-theme-color", theme.color);
-    document.documentElement.style.setProperty("--shell-theme-bg", theme.background);
-    document.documentElement.setAttribute("data-shell-screen", theme.screen);
-    if(document.body){
-      document.body.setAttribute("data-shell-screen", theme.screen);
-    }
-
-    applyBackground(document.documentElement, theme.background);
-    applyBackground(document.body, theme.background);
-    applyBackground(document.querySelector(".stage"), theme.background);
-    applyBackground(document.getElementById("appWrap"), theme.background);
-    applyBackground(document.getElementById("homeFrame"), theme.background);
-    applyBackground(ensureShellOverlay(), theme.background);
-  }
-
-  window.__setShellTheme = applyShellTheme;
-
-  window.addEventListener("message", function(event){
-    var data = event && event.data;
-    if(!data || data.type !== "pwa-shell-theme") return;
-    applyShellTheme(data);
-  });
-
-  window.addEventListener("pageshow", function(){
-    var screen = (document.documentElement.getAttribute("data-shell-screen") || "home");
-    applyShellTheme({ screen: screen });
-  });
-
-  document.addEventListener("DOMContentLoaded", function(){
-    applyShellTheme({ screen: "home" });
-  }, { once:true });
 })();
 </script>
 
@@ -6591,7 +6484,7 @@ body{
   background: rgba(255,255,255,.96);
 }
 #datosView .switch.is-loading .switchThumb::after{
-  content:&quot;&quot;;
+  content:"";
   position:absolute;
   inset:3px;
   border-radius:50%;
@@ -7485,11 +7378,11 @@ body{
       &lt;/div&gt;
 
       &lt;div class=&quot;opciones-top-actions&quot;&gt;
-        &lt;button class=&quot;whatsapp-mini-btn&quot; type=&quot;button&quot; onclick=&quot;window.open(&#x27;https://chat.whatsapp.com/FjPEs6nSyUeD7DNI3LsFVP?mode=gi_t&#x27;, &#x27;_blank&#x27;, &#x27;noopener,noreferrer&#x27;)&quot;&gt;
+        &lt;button class=&quot;whatsapp-mini-btn&quot; type=&quot;button&quot; onclick=&quot;window.open(&#39;https://chat.whatsapp.com/FjPEs6nSyUeD7DNI3LsFVP?mode=gi_t&#39;, &#39;_blank&#39;, &#39;noopener,noreferrer&#39;)&quot;&gt;
           &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot; focusable=&quot;false&quot;&gt;&lt;path fill=&quot;#ffffff&quot; d=&quot;M20.52 3.48A11.8 11.8 0 0 0 12.06 0C5.5 0 .16 5.34.16 11.9c0 2.1.55 4.16 1.6 5.98L0 24l6.29-1.65a11.78 11.78 0 0 0 5.77 1.48h.01c6.56 0 11.9-5.34 11.9-11.9 0-3.18-1.24-6.17-3.45-8.45Zm-8.46 18.34h-.01a9.87 9.87 0 0 1-5.03-1.37l-.36-.21-3.73.98 1-3.64-.24-.37A9.88 9.88 0 0 1 2.2 11.9c0-5.44 4.43-9.87 9.87-9.87 2.64 0 5.12 1.03 6.98 2.89a9.8 9.8 0 0 1 2.89 6.98c0 5.44-4.43 9.87-9.88 9.87Zm5.41-7.41c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.16-.17.2-.35.22-.65.08-.3-.15-1.25-.46-2.39-1.46-.88-.79-1.48-1.76-1.66-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.5h-.57c-.2 0-.52.08-.8.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.06 2.87 1.2 3.07.15.2 2.1 3.21 5.09 4.5.71.31 1.27.49 1.7.62.72.23 1.38.2 1.9.12.58-.09 1.77-.72 2.03-1.41.25-.69.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35Z&quot;/&gt;&lt;/svg&gt;
           &lt;span&gt;Grupo WhatsApp&lt;/span&gt;
         &lt;/button&gt;
-        &lt;button class=&quot;appgratis-mini-btn&quot; type=&quot;button&quot; onclick=&quot;window.open(&#x27;https://luqea.xapps.net.pe/login&#x27;, &#x27;_blank&#x27;, &#x27;noopener,noreferrer&#x27;)&quot;&gt;
+        &lt;button class=&quot;appgratis-mini-btn&quot; type=&quot;button&quot; onclick=&quot;window.open(&#39;https://luqea.xapps.net.pe/login&#39;, &#39;_blank&#39;, &#39;noopener,noreferrer&#39;)&quot;&gt;
           &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot; focusable=&quot;false&quot;&gt;&lt;path fill=&quot;#ffffff&quot; d=&quot;M7 2h10a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3Zm5 18.2a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5ZM8 5.2v10.7h8V5.2H8Z&quot;/&gt;&lt;/svg&gt;
           &lt;span&gt;App Gratis&lt;/span&gt;
         &lt;/button&gt;
@@ -12179,48 +12072,6 @@ function setUploadState(state){
     const banksView   = document.getElementById(&quot;banksView&quot;);
     const voucherView = document.getElementById(&quot;voucherView&quot;);
 
-    const HOME_STATUS_BAR_COLOR = &quot;#742284&quot;;
-    const HOME_STATUS_BAR_BACKGROUND = &quot;#742284&quot;;
-    const VOUCHER_STATUS_BAR_COLOR = &quot;#4f1768&quot;;
-    const VOUCHER_STATUS_BAR_BACKGROUND = &quot;linear-gradient(180deg, #4f1768 0%, #6a238a 100%)&quot;;
-
-    function applyLocalShellTheme(background, color, screen){
-      try{
-        document.documentElement.style.background = background;
-        document.body.style.background = background;
-        document.documentElement.setAttribute(&quot;data-shell-screen&quot;, screen);
-        document.body.setAttribute(&quot;data-shell-screen&quot;, screen);
-        const rootViews = document.querySelector(&quot;.views&quot;);
-        if(rootViews){
-          rootViews.style.background = background;
-        }
-      }catch(e){}
-
-      try{
-        const meta = document.querySelector(&#x27;meta[name=&quot;theme-color&quot;]&#x27;);
-        if(meta){
-          meta.setAttribute(&quot;content&quot;, color);
-        }
-      }catch(e){}
-    }
-
-    function notifyShellTheme(screen, color, background){
-      applyLocalShellTheme(background, color, screen);
-      try{
-        if(window.parent &amp;&amp; window.parent !== window){
-          window.parent.postMessage({ type:&quot;pwa-shell-theme&quot;, screen:screen, color:color, background:background }, &quot;*&quot;);
-        }
-      }catch(e){}
-    }
-
-    function syncShellThemeForView(v){
-      if(v === voucherView){
-        notifyShellTheme(&quot;voucher&quot;, VOUCHER_STATUS_BAR_COLOR, VOUCHER_STATUS_BAR_BACKGROUND);
-        return;
-      }
-      notifyShellTheme(&quot;home&quot;, HOME_STATUS_BAR_COLOR, HOME_STATUS_BAR_BACKGROUND);
-    }
-
     function showView(v){
       homeView.classList.add(&quot;hidden&quot;);
       perfilEditarView.classList.add(&quot;hidden&quot;);
@@ -12229,7 +12080,6 @@ function setUploadState(state){
       if(banksView) banksView.classList.add(&quot;hidden&quot;);
       voucherView.classList.add(&quot;hidden&quot;);
       v.classList.remove(&quot;hidden&quot;);
-      syncShellThemeForView(v);
     }
 
     // ====== FIX: al salir/volver al Home, cerrar Movimientos y volver arriba ======
@@ -12521,7 +12371,6 @@ function setUploadState(state){
     window.addEventListener(&quot;resize&quot;, ()=&gt;render(false));
     render(false);
     startAutoplay();
-    syncShellThemeForView(homeView);
 
 /* MOSTRAR / OCULTAR SALDO */
     const saldoCard = document.getElementById(&quot;saldoCard&quot;);
@@ -25191,3 +25040,148 @@ try{
   window.addEventListener('load', arm, { once:true });
 })();
 </script>
+
+
+<script id="pwa-statusbar-theme-sync-fix">
+(function(){
+  var THEMES = {
+    home: { screen: 'home', color: '#742284', backgroundColor: '#742284' },
+    voucher: { screen: 'voucher', color: '#4f1768', backgroundColor: '#4f1768' }
+  };
+
+  var lastScreen = '';
+  var syncTimer = null;
+
+  function getThemeMeta(){
+    var meta = document.getElementById('appThemeColorMeta') || document.querySelector('meta[name="theme-color"]');
+    if(!meta){
+      meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.id = 'appThemeColorMeta';
+      document.head.appendChild(meta);
+    }
+    return meta;
+  }
+
+  function applyScreenTheme(screen){
+    var theme = THEMES[screen] || THEMES.home;
+    if(lastScreen === theme.screen) return;
+    lastScreen = theme.screen;
+
+    var meta = getThemeMeta();
+    if(meta.getAttribute('content') !== theme.color){
+      meta.setAttribute('content', theme.color);
+    }
+
+    try { document.documentElement.style.backgroundColor = theme.backgroundColor; } catch(e){}
+    try { document.body.style.backgroundColor = theme.backgroundColor; } catch(e){}
+    try {
+      var stage = document.querySelector('.stage');
+      if(stage) stage.style.backgroundColor = theme.backgroundColor;
+    } catch(e){}
+
+    try { document.documentElement.setAttribute('data-statusbar-screen', theme.screen); } catch(e){}
+    try { document.body.setAttribute('data-statusbar-screen', theme.screen); } catch(e){}
+  }
+
+  function getHomeDoc(){
+    try{
+      var frame = document.getElementById('homeFrame');
+      if(!frame) return null;
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document) || null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function isVoucherVisible(doc){
+    if(!doc) return false;
+    var voucher = doc.getElementById('voucherView');
+    if(!voucher) return false;
+    if(voucher.classList && voucher.classList.contains('hidden')) return false;
+    var cs = null;
+    try { cs = doc.defaultView.getComputedStyle(voucher); } catch(e){}
+    if(cs){
+      if(cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') return false;
+    }
+    return true;
+  }
+
+  function detectActiveScreen(){
+    var doc = getHomeDoc();
+    if(!doc) return 'home';
+    return isVoucherVisible(doc) ? 'voucher' : 'home';
+  }
+
+  function syncNow(){
+    applyScreenTheme(detectActiveScreen());
+  }
+
+  function attachObserver(){
+    var doc = getHomeDoc();
+    if(!doc || doc.__statusbarThemeObserverAttached) return;
+    doc.__statusbarThemeObserverAttached = true;
+
+    var observer = new MutationObserver(function(){ syncNow(); });
+    try {
+      observer.observe(doc.documentElement || doc.body, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ['class', 'style']
+      });
+    } catch(e){}
+
+    try {
+      doc.addEventListener('click', function(){ setTimeout(syncNow, 0); }, true);
+      doc.addEventListener('touchend', function(){ setTimeout(syncNow, 0); }, true);
+    } catch(e){}
+
+    try {
+      var win = doc.defaultView;
+      if(win && typeof win.showView === 'function' && !win.__statusbarShowViewWrapped){
+        var originalShowView = win.showView;
+        win.showView = function(view){
+          var result = originalShowView.apply(this, arguments);
+          setTimeout(syncNow, 0);
+          setTimeout(syncNow, 120);
+          return result;
+        };
+        win.__statusbarShowViewWrapped = true;
+      }
+    } catch(e){}
+  }
+
+  function arm(){
+    applyScreenTheme('home');
+    var frame = document.getElementById('homeFrame');
+    if(frame && !frame.__statusbarThemeLoadBound){
+      frame.__statusbarThemeLoadBound = true;
+      frame.addEventListener('load', function(){
+        setTimeout(attachObserver, 40);
+        setTimeout(syncNow, 40);
+        setTimeout(syncNow, 220);
+        setTimeout(syncNow, 800);
+      });
+    }
+
+    if(syncTimer) clearInterval(syncTimer);
+    syncTimer = setInterval(syncNow, 500);
+
+    setTimeout(attachObserver, 40);
+    setTimeout(syncNow, 40);
+    setTimeout(syncNow, 220);
+    setTimeout(syncNow, 800);
+    setTimeout(syncNow, 1600);
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', arm, { once:true });
+  } else {
+    arm();
+  }
+  window.addEventListener('pageshow', syncNow);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) syncNow(); });
+})();
+</script>
+
