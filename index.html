@@ -7,7 +7,7 @@
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest?v=20260405-ios-safe-rebalance-fix4">
+  <link rel="manifest" href="manifest.webmanifest?v=20260405-ios-voucher-finefix-v5">
   <meta name="theme-color" content="#742284">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -25110,6 +25110,17 @@ html.ios-safe-iframe-bridge .homebienvenida.exact-search-enabled .exact-search-t
   setTimeout(run, 600);
 })();
 </script>
+
+<style id="ios-voucher-finefix-v5">
+html.ios-safe-iframe-bridge #voucherView .yape-logo{
+  top:calc(34px + min(var(--host-safe-top, 0px), 10px)) !important;
+  left:10px !important;
+}
+html.ios-safe-iframe-bridge #voucherView .card{
+  margin-top:calc(132px + min(var(--host-safe-top, 0px), 10px)) !important;
+}
+</style>
+
 </body>
 </html>
 
