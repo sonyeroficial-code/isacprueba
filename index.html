@@ -7,7 +7,7 @@
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest?v=20260405-statusbar-sync2-linefix">
+  <link rel="manifest" href="manifest.webmanifest?v=20260405-statusbar-sync3-linebleed">
   <meta name="theme-color" content="#742284">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24631,6 +24631,12 @@ body,
   border:0 !important;
   outline:none !important;
   box-shadow:none !important;
+  top:-2px !important;
+  height:calc(100% + 2px) !important;
+  clip-path:inset(0 0 0 0) !important;
+}
+#homeFrame{
+  z-index:1 !important;
 }
 </style>
 <script id="statusbar-surface-sync">
@@ -24786,6 +24792,9 @@ body,
     syncQueued = true;
     requestAnimationFrame(function(){
       syncQueued = false;
+      var homeDoc = getDoc(document.getElementById('homeFrame'));
+      bleedActiveFrame(homeDoc);
+      bleedActiveFrame(getDoc(homeDoc && homeDoc.getElementById && homeDoc.getElementById('homeExactFrame')));
       applySurface(getActiveSurface());
     });
   }
@@ -24803,6 +24812,22 @@ body,
 
   hookFrame(document.getElementById('homeFrame'));
   hookFrame(document.getElementById('loginFrame'));
+
+  function bleedActiveFrame(doc){
+    if(!doc || !doc.getElementById) return;
+    ['homeExactFrame', 'baucher-embed-frame'].forEach(function(id){
+      try{
+        var frame = doc.getElementById(id);
+        if(!frame) return;
+        frame.style.setProperty('border', '0', 'important');
+        frame.style.setProperty('outline', 'none', 'important');
+        frame.style.setProperty('box-shadow', 'none', 'important');
+        frame.style.setProperty('top', '-2px', 'important');
+        frame.style.setProperty('height', 'calc(100% + 2px)', 'important');
+        frame.style.setProperty('background', 'transparent', 'important');
+      }catch(e){}
+    });
+  }
 
   window.addEventListener('load', scheduleSync, { passive:true });
   window.addEventListener('pageshow', scheduleSync, { passive:true });
