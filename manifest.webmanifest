@@ -1,7 +1,7 @@
 {
   "name": "Yape",
   "short_name": "Yape",
-  "start_url": "./index.html?v=20260405-safearea-clean-v4",
+  "start_url": "./index.html?v=20260405-clean-safe-area-global",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
