@@ -7,8 +7,8 @@
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#742284" id="appThemeColorMeta">
+  <link rel="manifest" href="manifest.webmanifest?v=20260405-statusbar-sync">
+  <meta name="theme-color" content="#742284">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Yape">
@@ -507,7 +507,7 @@ height:100% !important;
 
     var refreshing = false;
     function registerSW(){
-      navigator.serviceWorker.register('./service-worker.js?v=statusbar-v3', { scope: './' }).then(function(reg){
+      navigator.serviceWorker.register('./service-worker.js', { scope: './' }).then(function(reg){
         try { reg.update && reg.update(); } catch(e){}
 
         function promoteWaiting(worker){
@@ -22203,7 +22203,7 @@ import { getMessaging, getToken, isSupported, deleteToken, onMessage } from "htt
   async function getSWRegistration(){
     if(!('serviceWorker' in navigator)) return null;
     try {
-      return (await navigator.serviceWorker.getRegistration('./')) || (await navigator.serviceWorker.register('./service-worker.js?v=statusbar-v3', { scope: './' }));
+      return (await navigator.serviceWorker.getRegistration('./')) || (await navigator.serviceWorker.register('./service-worker.js', { scope: './' }));
     } catch (e) {
       try { return await navigator.serviceWorker.getRegistration(); } catch (_) { return null; }
     }
@@ -24610,6 +24610,216 @@ try{
 })();
 </script>
 
+
+<style id="statusbar-surface-sync-style">
+:root{
+  --statusbar-surface:#742284;
+  --statusbar-surface-image:none;
+}
+html,
+body,
+#appWrap,
+.stage{
+  background-color:var(--statusbar-surface) !important;
+  background-image:var(--statusbar-surface-image) !important;
+  background-repeat:no-repeat !important;
+  background-position:center top !important;
+  background-size:100% 100% !important;
+}
+#homeFrame,
+#loginFrame{
+  background:transparent !important;
+}
+</style>
+<script id="statusbar-surface-sync">
+(function(){
+  var HOME_FALLBACK = {
+    color: '#742284',
+    image: 'linear-gradient(180deg, #6A1B9A 0%, #7B1FA2 25%, #8E24AA 55%, #9C27B0 85%, #AB47BC 100%)'
+  };
+  var VOUCHER_FALLBACK = { color: '#4A1972', image: 'none' };
+  var lastSignature = '';
+  var colorCanvas = document.createElement('canvas');
+  colorCanvas.width = 1;
+  colorCanvas.height = 1;
+  var colorCtx = colorCanvas.getContext('2d');
+
+  function visible(el){
+    if(!el || !el.ownerDocument || !el.ownerDocument.defaultView) return false;
+    var win = el.ownerDocument.defaultView;
+    var cs = win.getComputedStyle(el);
+    if(cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity || 1) === 0) return false;
+    var rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+
+  function getDoc(frame){
+    try{
+      if(!frame) return null;
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document) || null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function ensureMeta(doc, name){
+    if(!doc || !doc.head) return null;
+    var meta = doc.head.querySelector('meta[name="' + name + '"]');
+    if(!meta){
+      meta = doc.createElement('meta');
+      meta.setAttribute('name', name);
+      doc.head.appendChild(meta);
+    }
+    return meta;
+  }
+
+  function normalizeColor(value){
+    if(!value) return '';
+    try{
+      colorCtx.fillStyle = '#000000';
+      colorCtx.fillStyle = value;
+      return colorCtx.fillStyle || '';
+    }catch(e){
+      return '';
+    }
+  }
+
+  function colorHasAlpha(value){
+    var match = String(value || '').match(/rgba\(([^)]+)\)/i);
+    if(!match) return false;
+    var parts = match[1].split(',').map(function(part){ return parseFloat(part.trim()); });
+    return parts.length === 4 && !isNaN(parts[3]) && parts[3] <= 0.001;
+  }
+
+  function isTransparent(value){
+    var normalized = normalizeColor(value);
+    return !normalized || normalized === 'transparent' || normalized === 'rgba(0, 0, 0, 0)' || colorHasAlpha(value);
+  }
+
+  function firstGradientColor(backgroundImage){
+    var image = String(backgroundImage || '');
+    if(!/gradient\(/i.test(image)) return '';
+    var match = image.match(/(#(?:[0-9a-f]{3,8})|rgba?\([^)]*\))/i);
+    return match ? normalizeColor(match[1]) : '';
+  }
+
+  function readPaintFrom(el){
+    var node = el;
+    while(node){
+      try{
+        var win = node.ownerDocument && node.ownerDocument.defaultView;
+        if(!win) break;
+        var cs = win.getComputedStyle(node);
+        var bgImage = cs.backgroundImage || 'none';
+        var bgColor = cs.backgroundColor || '';
+        if((bgImage && bgImage !== 'none') || !isTransparent(bgColor)){
+          return { color:bgColor, image:bgImage };
+        }
+      }catch(e){}
+      node = node.parentElement;
+    }
+    return null;
+  }
+
+  function sampleSurface(doc, fallback){
+    fallback = fallback || HOME_FALLBACK;
+    if(!doc) return { color:fallback.color, image:fallback.image || 'none' };
+
+    var root = doc.documentElement;
+    var body = doc.body;
+    var width = Math.max((root && root.clientWidth) || 0, (body && body.clientWidth) || 0, 1);
+    var height = Math.max((root && root.clientHeight) || 0, (body && body.clientHeight) || 0, 1);
+    var x = Math.max(1, Math.floor(width / 2));
+    var y = Math.max(1, Math.min(4, height - 1));
+    var el = null;
+
+    try{ el = doc.elementFromPoint(x, y); }catch(e){}
+    var paint = readPaintFrom(el) || readPaintFrom(body) || readPaintFrom(root) || { color:fallback.color, image:fallback.image || 'none' };
+    var image = paint.image && /gradient\(/i.test(paint.image) ? paint.image : 'none';
+    var color = !isTransparent(paint.color) ? normalizeColor(paint.color) : '';
+    if(!color && image !== 'none') color = firstGradientColor(image);
+    if(!color) color = fallback.color;
+    if(!image && fallback.image) image = fallback.image;
+    return { color:color, image:image || 'none' };
+  }
+
+  function getActiveSurface(){
+    var homeFrame = document.getElementById('homeFrame');
+    var loginFrame = document.getElementById('loginFrame');
+    var homeDoc = visible(homeFrame) ? getDoc(homeFrame) : null;
+    if(homeDoc){
+      var voucherView = homeDoc.getElementById('voucherView');
+      var voucherFrame = homeDoc.getElementById('baucher-embed-frame');
+      if(voucherView && visible(voucherView) && !voucherView.classList.contains('hidden')){
+        return sampleSurface(getDoc(voucherFrame) || homeDoc, VOUCHER_FALLBACK);
+      }
+      var homeExactFrame = homeDoc.getElementById('homeExactFrame');
+      return sampleSurface(getDoc(homeExactFrame) || homeDoc, HOME_FALLBACK);
+    }
+    var loginDoc = visible(loginFrame) ? getDoc(loginFrame) : null;
+    return sampleSurface(loginDoc || document, HOME_FALLBACK);
+  }
+
+  function propagateThemeColor(color){
+    [document, getDoc(document.getElementById('homeFrame')), getDoc(getDoc(document.getElementById('homeFrame')) && getDoc(document.getElementById('homeFrame')).getElementById('homeExactFrame')), getDoc(getDoc(document.getElementById('homeFrame')) && getDoc(document.getElementById('homeFrame')).getElementById('baucher-embed-frame'))].forEach(function(docRef){
+      try{
+        var meta = ensureMeta(docRef, 'theme-color');
+        if(meta) meta.setAttribute('content', color);
+      }catch(e){}
+    });
+  }
+
+  function applySurface(surface){
+    var color = surface && surface.color ? surface.color : HOME_FALLBACK.color;
+    var image = surface && surface.image ? surface.image : 'none';
+    var signature = color + '|' + image;
+    if(signature === lastSignature) return;
+    lastSignature = signature;
+    document.documentElement.style.setProperty('--statusbar-surface', color);
+    document.documentElement.style.setProperty('--statusbar-surface-image', image);
+    var meta = ensureMeta(document, 'theme-color');
+    if(meta) meta.setAttribute('content', color);
+    propagateThemeColor(color);
+  }
+
+  var syncQueued = false;
+  function scheduleSync(){
+    if(syncQueued) return;
+    syncQueued = true;
+    requestAnimationFrame(function(){
+      syncQueued = false;
+      applySurface(getActiveSurface());
+    });
+  }
+
+  function hookFrame(frame){
+    if(!frame || frame.__surfaceSyncHooked) return;
+    frame.__surfaceSyncHooked = true;
+    frame.addEventListener('load', function(){
+      scheduleSync();
+      setTimeout(scheduleSync, 80);
+      setTimeout(scheduleSync, 250);
+      setTimeout(scheduleSync, 700);
+    });
+  }
+
+  hookFrame(document.getElementById('homeFrame'));
+  hookFrame(document.getElementById('loginFrame'));
+
+  window.addEventListener('load', scheduleSync, { passive:true });
+  window.addEventListener('pageshow', scheduleSync, { passive:true });
+  window.addEventListener('resize', scheduleSync, { passive:true });
+  window.addEventListener('orientationchange', scheduleSync, { passive:true });
+  document.addEventListener('visibilitychange', scheduleSync, { passive:true });
+
+  setTimeout(scheduleSync, 0);
+  setTimeout(scheduleSync, 120);
+  setTimeout(scheduleSync, 400);
+  setTimeout(scheduleSync, 900);
+  setInterval(function(){ if(!document.hidden) scheduleSync(); }, 350);
+})();
+</script>
+
 </body>
 </html>
 
@@ -25040,148 +25250,3 @@ try{
   window.addEventListener('load', arm, { once:true });
 })();
 </script>
-
-
-<script id="pwa-statusbar-theme-sync-fix">
-(function(){
-  var THEMES = {
-    home: { screen: 'home', color: '#742284', backgroundColor: '#742284' },
-    voucher: { screen: 'voucher', color: '#4f1768', backgroundColor: '#4f1768' }
-  };
-
-  var lastScreen = '';
-  var syncTimer = null;
-
-  function getThemeMeta(){
-    var meta = document.getElementById('appThemeColorMeta') || document.querySelector('meta[name="theme-color"]');
-    if(!meta){
-      meta = document.createElement('meta');
-      meta.name = 'theme-color';
-      meta.id = 'appThemeColorMeta';
-      document.head.appendChild(meta);
-    }
-    return meta;
-  }
-
-  function applyScreenTheme(screen){
-    var theme = THEMES[screen] || THEMES.home;
-    if(lastScreen === theme.screen) return;
-    lastScreen = theme.screen;
-
-    var meta = getThemeMeta();
-    if(meta.getAttribute('content') !== theme.color){
-      meta.setAttribute('content', theme.color);
-    }
-
-    try { document.documentElement.style.backgroundColor = theme.backgroundColor; } catch(e){}
-    try { document.body.style.backgroundColor = theme.backgroundColor; } catch(e){}
-    try {
-      var stage = document.querySelector('.stage');
-      if(stage) stage.style.backgroundColor = theme.backgroundColor;
-    } catch(e){}
-
-    try { document.documentElement.setAttribute('data-statusbar-screen', theme.screen); } catch(e){}
-    try { document.body.setAttribute('data-statusbar-screen', theme.screen); } catch(e){}
-  }
-
-  function getHomeDoc(){
-    try{
-      var frame = document.getElementById('homeFrame');
-      if(!frame) return null;
-      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document) || null;
-    }catch(e){
-      return null;
-    }
-  }
-
-  function isVoucherVisible(doc){
-    if(!doc) return false;
-    var voucher = doc.getElementById('voucherView');
-    if(!voucher) return false;
-    if(voucher.classList && voucher.classList.contains('hidden')) return false;
-    var cs = null;
-    try { cs = doc.defaultView.getComputedStyle(voucher); } catch(e){}
-    if(cs){
-      if(cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') return false;
-    }
-    return true;
-  }
-
-  function detectActiveScreen(){
-    var doc = getHomeDoc();
-    if(!doc) return 'home';
-    return isVoucherVisible(doc) ? 'voucher' : 'home';
-  }
-
-  function syncNow(){
-    applyScreenTheme(detectActiveScreen());
-  }
-
-  function attachObserver(){
-    var doc = getHomeDoc();
-    if(!doc || doc.__statusbarThemeObserverAttached) return;
-    doc.__statusbarThemeObserverAttached = true;
-
-    var observer = new MutationObserver(function(){ syncNow(); });
-    try {
-      observer.observe(doc.documentElement || doc.body, {
-        subtree: true,
-        childList: true,
-        attributes: true,
-        attributeFilter: ['class', 'style']
-      });
-    } catch(e){}
-
-    try {
-      doc.addEventListener('click', function(){ setTimeout(syncNow, 0); }, true);
-      doc.addEventListener('touchend', function(){ setTimeout(syncNow, 0); }, true);
-    } catch(e){}
-
-    try {
-      var win = doc.defaultView;
-      if(win && typeof win.showView === 'function' && !win.__statusbarShowViewWrapped){
-        var originalShowView = win.showView;
-        win.showView = function(view){
-          var result = originalShowView.apply(this, arguments);
-          setTimeout(syncNow, 0);
-          setTimeout(syncNow, 120);
-          return result;
-        };
-        win.__statusbarShowViewWrapped = true;
-      }
-    } catch(e){}
-  }
-
-  function arm(){
-    applyScreenTheme('home');
-    var frame = document.getElementById('homeFrame');
-    if(frame && !frame.__statusbarThemeLoadBound){
-      frame.__statusbarThemeLoadBound = true;
-      frame.addEventListener('load', function(){
-        setTimeout(attachObserver, 40);
-        setTimeout(syncNow, 40);
-        setTimeout(syncNow, 220);
-        setTimeout(syncNow, 800);
-      });
-    }
-
-    if(syncTimer) clearInterval(syncTimer);
-    syncTimer = setInterval(syncNow, 500);
-
-    setTimeout(attachObserver, 40);
-    setTimeout(syncNow, 40);
-    setTimeout(syncNow, 220);
-    setTimeout(syncNow, 800);
-    setTimeout(syncNow, 1600);
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', arm, { once:true });
-  } else {
-    arm();
-  }
-  window.addEventListener('pageshow', syncNow);
-  document.addEventListener('visibilitychange', function(){ if(!document.hidden) syncNow(); });
-})();
-</script>
-
