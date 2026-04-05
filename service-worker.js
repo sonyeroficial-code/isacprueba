@@ -1,5 +1,5 @@
 /* Yape PWA Service Worker - safe startup + offline support */
-const CACHE_VERSION = 'yape-shell-v20260405-safearea-global-v1';
+const CACHE_VERSION = 'yape-shell-v20260405-safearea-shell-v2';
 const PRECACHE_NAME = `yape-precache-${CACHE_VERSION}`;
 const RUNTIME_NAME  = `yape-runtime-${CACHE_VERSION}`;
 
@@ -75,7 +75,7 @@ self.addEventListener('fetch', (event) => {
         putRuntime('./index.html', response.clone());
         return response;
       } catch (_) {
-        return (await fromCache('./index.html')) || (await fromCache('./')) || new Response('<!doctype html><title>Offline</title><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font-family:sans-serif;background:#742284;color:#fff;display:flex;min-height:100dvh;align-items:center;justify-content:center">Sin conexión</body>', { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+        return (await fromCache('./index.html')) || (await fromCache('./')) || new Response('<!doctype html><title>Offline</title><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font-family:sans-serif;background:#742284;color:#fff;display:flex;min-height:100vh;align-items:center;justify-content:center">Sin conexión</body>', { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
       }
     })());
     return;
