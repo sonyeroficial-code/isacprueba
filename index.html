@@ -7,7 +7,7 @@
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest?v=20260405-ios-safe-bridge-fix3">
+  <link rel="manifest" href="manifest.webmanifest?v=20260405-ios-safe-rebalance-fix4">
   <meta name="theme-color" content="#742284">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20272,7 +20272,7 @@ html.ios-final-fix iframe{
     logo.style.width = '66px';
     logo.style.height = '84px';
     logo.style.marginLeft = '16px';
-    logo.style.marginTop = 'calc(28px + var(--host-safe-top, 0px))';
+    logo.style.marginTop = 'calc(28px + min(var(--host-safe-top, 0px), 6px))';
     logo.style.marginBottom = '4px';
     logo.style.position = 'relative';
     logo.style.overflow = 'visible';
@@ -20379,10 +20379,10 @@ html.ios-final-fix iframe{
       innerStyle.id = 'baucher-inner-fix';
       innerStyle.textContent = [
         'html,body{height:100%!important;overflow:auto!important;background:#4a1972!important;margin:0!important;position:relative!important;}',
-        '.close-btn-yape{position:absolute!important;top:calc(var(--host-safe-top, 0px) + 18px)!important;right:calc(env(safe-area-inset-right, 0px) + 16px)!important;z-index:80!important;margin:0!important;width:46px!important;height:46px!important;border-radius:50%!important;background:rgba(255,255,255,.12)!important;border:0!important;color:#fff!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-decoration:none!important;overflow:hidden!important;cursor:pointer!important;} .close-btn-yape span{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:100%!important;color:#fff!important;font-size:30px!important;line-height:1!important;font-weight:300!important;font-family:Arial,sans-serif!important;transform:translateY(-1px)!important;pointer-events:none!important;}',
-        '.father[_ngcontent-ng-c755697887]{min-height:calc(100dvh - var(--host-safe-top, 0px))!important;height:auto!important;padding-top:calc(var(--host-safe-top, 0px) + 8px)!important;box-sizing:border-box!important;}',
-        '.inicioCom[_ngcontent-ng-c755697887]{top:calc(var(--host-safe-top, 0px) + 2px)!important;right:0!important;}',
-        '.animation[_ngcontent-ng-c755697887]{margin-top:calc(var(--host-safe-top, 0px) + 8px)!important;}',
+        '.close-btn-yape{position:absolute!important;top:calc(min(var(--host-safe-top, 0px), 8px) + 18px)!important;right:calc(env(safe-area-inset-right, 0px) + 16px)!important;z-index:80!important;margin:0!important;width:46px!important;height:46px!important;border-radius:50%!important;background:rgba(255,255,255,.12)!important;border:0!important;color:#fff!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-decoration:none!important;overflow:hidden!important;cursor:pointer!important;} .close-btn-yape span{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:100%!important;color:#fff!important;font-size:30px!important;line-height:1!important;font-weight:300!important;font-family:Arial,sans-serif!important;transform:translateY(-1px)!important;pointer-events:none!important;}',
+        '.father[_ngcontent-ng-c755697887]{min-height:100dvh!important;height:auto!important;padding-top:8px!important;box-sizing:border-box!important;}',
+        '.inicioCom[_ngcontent-ng-c755697887]{top:10px!important;right:0!important;}',
+        '.animation[_ngcontent-ng-c755697887]{margin-top:8px!important;}',
         '.monto{margin:2.6vw 0 3.2vw!important;}',
         '.monto label{display:flex!important;align-items:flex-start!important;gap:0!important;}',
         '.monto label > span:last-child{font-size:12.6vw!important;font-weight:700!important;line-height:1!important;letter-spacing:-0.01em!important;font-stretch:normal!important;}',
@@ -25144,13 +25144,13 @@ html.ios-safe-iframe-bridge .homebienvenida.exact-search-enabled .exact-search-t
 <style id="ios-v3-extra-safe-fix">
 html.ios-safe-iframe-bridge #montoView #mContent,
 html.ios-safe-iframe-bridge #montoView .mContent{
-  padding-top:calc(var(--host-safe-top, 0px) + 10px) !important;
+  padding-top:8px !important;
   box-sizing:border-box !important;
 }
 html.ios-safe-iframe-bridge #montoView .mHeaderLikePhoto,
 html.ios-safe-iframe-bridge #montoView .mHeader{
-  min-height:calc(44px + var(--host-safe-top, 0px)) !important;
-  padding-top:calc(var(--host-safe-top, 0px) + 8px) !important;
+  min-height:calc(44px + min(var(--host-safe-top, 0px), 8px)) !important;
+  padding-top:calc(min(var(--host-safe-top, 0px), 8px) + 8px) !important;
   padding-bottom:8px !important;
   box-sizing:border-box !important;
 }

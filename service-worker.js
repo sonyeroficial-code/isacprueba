@@ -1,5 +1,5 @@
 /* Yape PWA Service Worker - safe startup + offline support */
-const CACHE_VERSION = 'yape-shell-v20260405-ios-safe-bridge-fix3';
+const CACHE_VERSION = 'yape-shell-v20260405-ios-safe-rebalance-fix4';
 const PRECACHE_NAME = `yape-precache-${CACHE_VERSION}`;
 const RUNTIME_NAME  = `yape-runtime-${CACHE_VERSION}`;
 

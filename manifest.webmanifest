@@ -1,7 +1,7 @@
 {
   "name": "Yape",
   "short_name": "Yape",
-  "start_url": "./index.html?v=20260405-ios-safe-bridge-fix3",
+  "start_url": "./index.html?v=20260405-ios-safe-rebalance-fix4",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
