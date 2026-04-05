@@ -1,5 +1,5 @@
 /* Yape PWA Service Worker - safe startup + offline support */
-const CACHE_VERSION = 'fix-startup-v2';
+const CACHE_VERSION = 'fix-startup-v3-theme-sync';
 const PRECACHE_NAME = `yape-precache-${CACHE_VERSION}`;
 const RUNTIME_NAME  = `yape-runtime-${CACHE_VERSION}`;
 
