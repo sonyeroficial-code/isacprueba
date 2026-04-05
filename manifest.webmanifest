@@ -1,7 +1,7 @@
 {
   "name": "Yape",
   "short_name": "Yape",
-  "start_url": "./index.html?v=20260405-statusbar-sync",
+  "start_url": "./index.html?v=20260405-statusbar-sync2-linefix",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",

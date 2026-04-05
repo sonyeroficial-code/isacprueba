@@ -7,7 +7,7 @@
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest?v=20260405-statusbar-sync">
+  <link rel="manifest" href="manifest.webmanifest?v=20260405-statusbar-sync2-linefix">
   <meta name="theme-color" content="#742284">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24614,30 +24614,29 @@ try{
 <style id="statusbar-surface-sync-style">
 :root{
   --statusbar-surface:#742284;
-  --statusbar-surface-image:none;
 }
 html,
 body,
 #appWrap,
 .stage{
   background-color:var(--statusbar-surface) !important;
-  background-image:var(--statusbar-surface-image) !important;
-  background-repeat:no-repeat !important;
-  background-position:center top !important;
-  background-size:100% 100% !important;
+  background-image:none !important;
+  border:0 !important;
+  outline:none !important;
+  box-shadow:none !important;
 }
 #homeFrame,
 #loginFrame{
   background:transparent !important;
+  border:0 !important;
+  outline:none !important;
+  box-shadow:none !important;
 }
 </style>
 <script id="statusbar-surface-sync">
 (function(){
-  var HOME_FALLBACK = {
-    color: '#742284',
-    image: 'linear-gradient(180deg, #6A1B9A 0%, #7B1FA2 25%, #8E24AA 55%, #9C27B0 85%, #AB47BC 100%)'
-  };
-  var VOUCHER_FALLBACK = { color: '#4A1972', image: 'none' };
+  var HOME_FALLBACK = { color: '#742284' };
+  var VOUCHER_FALLBACK = { color: '#4A1972' };
   var lastSignature = '';
   var colorCanvas = document.createElement('canvas');
   colorCanvas.width = 1;
@@ -24710,10 +24709,14 @@ body,
         var win = node.ownerDocument && node.ownerDocument.defaultView;
         if(!win) break;
         var cs = win.getComputedStyle(node);
-        var bgImage = cs.backgroundImage || 'none';
         var bgColor = cs.backgroundColor || '';
-        if((bgImage && bgImage !== 'none') || !isTransparent(bgColor)){
-          return { color:bgColor, image:bgImage };
+        if(!isTransparent(bgColor)){
+          return { color:bgColor };
+        }
+        var bgImage = cs.backgroundImage || 'none';
+        var gradientColor = firstGradientColor(bgImage);
+        if(gradientColor){
+          return { color:gradientColor };
         }
       }catch(e){}
       node = node.parentElement;
@@ -24723,7 +24726,7 @@ body,
 
   function sampleSurface(doc, fallback){
     fallback = fallback || HOME_FALLBACK;
-    if(!doc) return { color:fallback.color, image:fallback.image || 'none' };
+    if(!doc) return { color:fallback.color };
 
     var root = doc.documentElement;
     var body = doc.body;
@@ -24734,13 +24737,10 @@ body,
     var el = null;
 
     try{ el = doc.elementFromPoint(x, y); }catch(e){}
-    var paint = readPaintFrom(el) || readPaintFrom(body) || readPaintFrom(root) || { color:fallback.color, image:fallback.image || 'none' };
-    var image = paint.image && /gradient\(/i.test(paint.image) ? paint.image : 'none';
+    var paint = readPaintFrom(el) || readPaintFrom(body) || readPaintFrom(root) || { color:fallback.color };
     var color = !isTransparent(paint.color) ? normalizeColor(paint.color) : '';
-    if(!color && image !== 'none') color = firstGradientColor(image);
     if(!color) color = fallback.color;
-    if(!image && fallback.image) image = fallback.image;
-    return { color:color, image:image || 'none' };
+    return { color:color };
   }
 
   function getActiveSurface(){
@@ -24771,12 +24771,10 @@ body,
 
   function applySurface(surface){
     var color = surface && surface.color ? surface.color : HOME_FALLBACK.color;
-    var image = surface && surface.image ? surface.image : 'none';
-    var signature = color + '|' + image;
+    var signature = color;
     if(signature === lastSignature) return;
     lastSignature = signature;
     document.documentElement.style.setProperty('--statusbar-surface', color);
-    document.documentElement.style.setProperty('--statusbar-surface-image', image);
     var meta = ensureMeta(document, 'theme-color');
     if(meta) meta.setAttribute('content', color);
     propagateThemeColor(color);
