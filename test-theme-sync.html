@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>theme sync test</title></head>
+<body>
+<pre id="out">loading</pre>
+<script>
+localStorage.setItem('yapeton_session', JSON.stringify({ok:true, uid:'demo'}));
+const frame = document.createElement('iframe');
+frame.src = './index.html';
+frame.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;';
+document.body.appendChild(frame);
+function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
+async function run(){
+  await wait(2200);
+  const appWin = frame.contentWindow;
+  const appDoc = frame.contentDocument;
+  const meta = () => appDoc.querySelector('meta[name="theme-color"]');
+  const homeFrame = appDoc.getElementById('homeFrame');
+  const innerWin = homeFrame.contentWindow;
+  const innerDoc = homeFrame.contentDocument;
+  const homeColor = meta() ? meta().getAttribute('content') : 'missing';
+  innerWin.showView(innerDoc.getElementById('voucherView'));
+  await wait(150);
+  const voucherColor = meta() ? meta().getAttribute('content') : 'missing';
+  innerWin.showView(innerDoc.getElementById('homeView'));
+  await wait(150);
+  const backHomeColor = meta() ? meta().getAttribute('content') : 'missing';
+  document.getElementById('out').textContent = JSON.stringify({homeColor, voucherColor, backHomeColor}, null, 2);
+}
+run().catch(err => { document.getElementById('out').textContent = String(err && err.stack || err); });
+</script>
+</body>
+</html>
