@@ -7,7 +7,7 @@
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest?v=20260405-safearea-shell-v2">
+  <link rel="manifest" href="manifest.webmanifest?v=20260405-statusbar-sync3-linebleed">
   <meta name="theme-color" content="#742284">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -546,10 +546,523 @@ height:100% !important;
 })();
 </script>
 
+<style id="global-responsive-fix">
+  :root{
+    --app-vh: 100dvh;
+    --app-vw: 100vw;
+    --app-scale: 1;
+    --app-pad-x: clamp(10px, 3.6vw, 18px);
+    --app-gap: clamp(8px, 2.8vw, 14px);
+    --app-radius: clamp(16px, 4vw, 28px);
+  }
+
+  html{
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+    overflow-x:hidden !important;
+    background:#742284;
+  }
+
+  body{
+    width:100%;
+    min-height:var(--app-vh);
+    overflow-x:hidden !important;
+  }
+
+  body, .stage, .device, .views, .screen, iframe{
+    max-width:100vw !important;
+  }
+
+  .stage, .device, .views, .screen{
+    min-height:var(--app-vh);
+  }
+
+  img, video, canvas, svg{
+    max-width:100%;
+  }
+
+  input, textarea, select, button{
+    font: inherit;
+  }
+
+  *{
+    min-width:0;
+    word-wrap:break-word;
+    overflow-wrap:anywhere;
+  }
+
+  .screen{
+    width:100%;
+    padding-left:max(var(--app-pad-x), env(safe-area-inset-left)) !important;
+    padding-right:max(var(--app-pad-x), env(safe-area-inset-right)) !important;
+    padding-bottom:calc(env(safe-area-inset-bottom) + 6px) !important;
+    gap:var(--app-gap) !important;
+  }
+
+  .card,
+  .sheet,
+  .modal,
+  .validate-modal,
+  .netModalCard,
+  .yNotifCard,
+  .rcCard,
+  .qrReg-card,
+  .opCard{
+    width:min(100%, 100vw - 24px) !important;
+    max-width:min(100%, 520px) !important;
+  }
+
+  .actions,
+  .top,
+  .bottom,
+  .row,
+  .chips,
+  .tabs,
+  .stories,
+  .filters{
+    max-width:100%;
+  }
+
+  .actions,
+  .chips,
+  .tabs,
+  .stories,
+  .filters{
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .actions::-webkit-scrollbar,
+  .chips::-webkit-scrollbar,
+  .tabs::-webkit-scrollbar,
+  .stories::-webkit-scrollbar,
+  .filters::-webkit-scrollbar{ display:none; }
+
+  .keypad{ gap:clamp(8px, 2.2vw, 12px) !important; }
+  .key{ max-width:none !important; }
+
+  @media (max-width: 430px){
+    :root{
+      --screenX: clamp(12px, 3.8vw, 16px);
+      --screenY: clamp(10px, 3vw, 14px);
+      --radiusCard: clamp(18px, 5vw, 24px);
+      --radiusQr: clamp(12px, 4vw, 18px);
+      --radiusKey: clamp(10px, 3.2vw, 12px);
+    }
+
+    .device{
+      width:100vw !important;
+      height:var(--app-vh) !important;
+      border-radius:0 !important;
+      box-shadow:none !important;
+    }
+
+    .help-pill{
+      padding:9px 13px !important;
+      font-size:14px !important;
+      gap:8px !important;
+    }
+
+    .actions{
+      justify-content:flex-start !important;
+      padding-bottom:2px;
+    }
+
+    .action{
+      width:clamp(72px, 23vw, 88px) !important;
+      flex:0 0 auto;
+    }
+
+    .action .label{
+      font-size:12.5px !important;
+    }
+
+    .qr-box{
+      width:clamp(138px, 42vw, 182px) !important;
+      margin-top:30px !important;
+    }
+
+    .title{ font-size:clamp(19px, 5vw, 24px) !important; }
+    .forgot{ font-size:15px !important; }
+  }
+
+  @media (max-width: 360px){
+    :root{ --app-pad-x: 12px; --app-gap: 8px; }
+    .screen{ padding-top:calc(env(safe-area-inset-top) + 8px) !important; }
+    .qr-box{ width:clamp(128px, 40vw, 160px) !important; margin-top:24px !important; }
+    .actions{ margin-top:18px !important; gap:10px !important; }
+    .action{ width:70px !important; }
+    .action .icon-wrap{ width:44px !important; height:44px !important; }
+    .action .label{ font-size:12px !important; }
+    .card{ padding:12px 12px 8px !important; }
+    .key{ height:clamp(38px, 7vh, 48px) !important; font-size:clamp(18px, 5.5vw, 24px) !important; }
+  }
+
+  @media (max-height: 740px){
+    .screen{
+      padding-top:calc(env(safe-area-inset-top) + 8px) !important;
+      gap:8px !important;
+    }
+    .qr-box{ margin-top:24px !important; }
+    .actions{ margin-top:14px !important; }
+    .card{ padding-top:12px !important; }
+  }
+
+  @media (max-height: 680px){
+    .qr-box{ width:clamp(124px, 38vw, 152px) !important; margin-top:18px !important; }
+    .action .icon-wrap{ width:42px !important; height:42px !important; }
+    .action .label{ font-size:12px !important; }
+    .key{ height:40px !important; }
+  }
+</style>
+<script id="global-responsive-fix-script">
+(function(){
+  function setViewportVars(){
+    var vv = window.visualViewport;
+    var w = vv ? vv.width : window.innerWidth;
+    var h = vv ? vv.height : window.innerHeight;
+    var scale = Math.min(1, w / 390);
+    document.documentElement.style.setProperty('--app-vh', h + 'px');
+    document.documentElement.style.setProperty('--app-vw', w + 'px');
+    document.documentElement.style.setProperty('--app-scale', scale.toFixed(4));
+    document.documentElement.classList.toggle('is-narrow-phone', w <= 360);
+    document.documentElement.classList.toggle('is-short-phone', h <= 700);
+  }
+  setViewportVars();
+  window.addEventListener('resize', setViewportVars, {passive:true});
+  window.addEventListener('orientationchange', setViewportVars, {passive:true});
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', setViewportVars, {passive:true});
+  }
+})();
+</script>
 
 
+<style id="__global_responsive_patch">
+/* === GLOBAL RESPONSIVE PATCH === */
+:root{
+  --app-vw: 100vw;
+  --app-vh: 100vh;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --fluid-gap: clamp(8px, 2.6vw, 16px);
+  --fluid-radius: clamp(10px, 3vw, 18px);
+  --app-max-inline: calc(100vw - var(--safe-left) - var(--safe-right));
+}
+html{
+  width:100%;
+  min-height:100%;
+  overflow-x:hidden !important;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+  background:#742284;
+}
+body{
+  width:100%;
+  min-height:100%;
+  max-width:100vw;
+  overflow-x:hidden !important;
+  overscroll-behavior-x:none;
+  padding-left:var(--safe-left);
+  padding-right:var(--safe-right);
+}
+*, *::before, *::after{
+  box-sizing:border-box !important;
+  min-width:0;
+}
+img, svg, video, canvas, iframe{
+  max-width:100%;
+}
+img, video, canvas{
+  height:auto;
+}
+textarea{max-width:100%;}
+input, textarea, select, button{
+  font:inherit;
+}
+.stage{
+  width:100vw;
+  width:var(--app-vw);
+  height:100vh;
+  height:var(--app-vh);
+  max-width:100vw;
+  overflow:hidden;
+}
+iframe{
+  width:100% !important;
+  height:100% !important;
+  max-width:100vw !important;
+}
+:where(main,section,article,aside,header,footer,nav,div){
+  max-width:100%;
+}
+:where(.screen,.page,.view,.sheet,.modal,.dialog,.popup,.panel,.card,.post,.story,.banner,.voucher,.container,.wrapper,.wrap,.content,.list,.grid,.row,.col){
+  max-width:100%;
+}
+:where(.row,.flex,[style*="display:flex"], [style*="display: flex"]){
+  flex-wrap:wrap;
+}
+:where(.row,.flex,.list,.grid,.content,.container,.wrapper,.wrap,.sheet,.modal,.dialog,.popup,.panel,.card,.post,.banner,.voucher){
+  min-width:0;
+}
+@media (max-width: 430px){
+  :where(.sheet,.modal,.dialog,.popup,.panel,.card,.post,.banner,.voucher,.container,.wrapper,.wrap,.content){
+    border-radius: min(var(--fluid-radius), 16px);
+  }
+  :where(.container,.wrapper,.wrap,.content,.list,.grid,.panel,.card,.post,.banner,.voucher){
+    max-width: calc(100vw - var(--safe-left) - var(--safe-right));
+  }
+}
+@media (max-width: 390px){
+  :where(h1,h2,h3,.title,.subtitle,.amount,.price){
+    word-break: break-word;
+    overflow-wrap:anywhere;
+  }
+  :where(button,.btn,.chip,.pill,.tag,a){
+    max-width:100%;
+  }
+}
+</style>
 
 
+<style id="global-responsive-fix-v2">
+/* ===== Global responsive fix stronger ===== */
+:root{
+  --app-max: 430px;
+  --app-side: clamp(12px, 3.6vw, 18px);
+  --app-top: max(env(safe-area-inset-top), 8px);
+  --app-bottom: max(env(safe-area-inset-bottom), 12px);
+}
+html,body{
+  width:100%;
+  min-height:100%;
+  overflow-x:hidden !important;
+}
+body{
+  position:relative;
+}
+.stage{
+  overflow:hidden !important;
+}
+#voucherView{
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch;
+  padding-top:0 !important;
+}
+#voucherView .voucherBody{
+  width:100% !important;
+  min-height:100dvh !important;
+  padding: var(--app-top) var(--app-side) calc(var(--app-bottom) + 18px) !important;
+  align-items:flex-start !important;
+  box-sizing:border-box !important;
+}
+#voucherView .container{
+  width:min(100%, var(--app-max)) !important;
+  max-width:min(100%, var(--app-max)) !important;
+  margin:0 auto !important;
+  padding-top:6px !important;
+  position:relative !important;
+  left:auto !important;
+  right:auto !important;
+  transform:none !important;
+}
+#voucherView .close-btn{
+  top: calc(env(safe-area-inset-top) + 8px) !important;
+  right: 12px !important;
+  left: auto !important;
+  transform: none !important;
+}
+#voucherView .yape-logo{
+  top: clamp(26px, 7vw, 44px) !important;
+  left: clamp(8px, 2vw, 12px) !important;
+  width: clamp(56px, 16vw, 78px) !important;
+  height: clamp(56px, 16vw, 78px) !important;
+}
+#voucherView .card{
+  width:100% !important;
+  max-width:100% !important;
+  margin-top: clamp(108px, 28vw, 132px) !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  padding: clamp(18px, 4.4vw, 23px) clamp(14px, 4.2vw, 19px) clamp(16px, 4vw, 19px) !important;
+  border-radius: clamp(20px, 6vw, 28px) !important;
+  box-sizing:border-box !important;
+}
+#voucherView .header,
+#voucherView .security-row,
+#voucherView .promo-grid,
+#voucherView .row{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+}
+#voucherView .header,
+#voucherView .security-row{
+  gap:12px !important;
+}
+#voucherView .share{
+  flex:0 0 auto !important;
+  white-space:nowrap !important;
+}
+#voucherView .amount{
+  flex-wrap:wrap !important;
+  margin:18px 0 14px !important;
+}
+#voucherView .currency{
+  font-size: clamp(26px, 7.2vw, 30px) !important;
+}
+#voucherView .number{
+  font-size: clamp(40px, 13.2vw, 52px) !important;
+}
+#voucherView .title,
+#voucherView .name{
+  overflow-wrap:anywhere !important;
+  word-break:break-word !important;
+}
+#voucherView .datetime{
+  row-gap:8px !important;
+  column-gap:8px !important;
+}
+#voucherView .security-label,
+#voucherView .section-title,
+#voucherView .vMsgText,
+#voucherView .promo-text,
+#voucherView .data,
+#voucherView .row span,
+#voucherView .datetime,
+#voucherView .share,
+#voucherView .title,
+#voucherView .name{
+  max-width:100% !important;
+  min-width:0 !important;
+}
+#voucherView .security-row{
+  flex-wrap:nowrap !important;
+}
+#voucherView .security-label{
+  flex:1 1 auto !important;
+}
+#voucherView .security-boxes{
+  flex:0 0 auto !important;
+}
+#voucherView .code{
+  width: clamp(26px, 7vw, 30px) !important;
+  height: clamp(26px, 7vw, 30px) !important;
+}
+#voucherView .data{
+  font-size: clamp(16px, 4.8vw, 18px) !important;
+}
+#voucherView .row{
+  flex-wrap:nowrap !important;
+  align-items:flex-start !important;
+}
+#voucherView .row > span:first-child{
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  padding-right:10px !important;
+}
+#voucherView .row > span:last-child{
+  flex:0 0 auto !important;
+  text-align:right !important;
+  max-width:50% !important;
+  overflow-wrap:anywhere !important;
+}
+#voucherView .promo-wrap{
+  width:100% !important;
+  box-sizing:border-box !important;
+  padding: clamp(14px, 4vw, 18px) !important;
+  border-radius: clamp(18px, 5vw, 24px) !important;
+}
+#voucherView .promo-card{
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+#voucherView .promo-grid{
+  flex-wrap:nowrap !important;
+  gap:0 !important;
+}
+#voucherView .promo-left{
+  flex:1.25 1 0 !important;
+  min-width:0 !important;
+  min-height: clamp(118px, 32vw, 156px) !important;
+  border-radius: 16px 0 0 16px !important;
+}
+#voucherView .promo-right{
+  flex:0.95 1 0 !important;
+  min-width:0 !important;
+  padding: clamp(10px, 2.8vw, 14px) clamp(10px, 3vw, 14px) !important;
+}
+#voucherView .promo-text{
+  font-size: clamp(11px, 3.1vw, 13px) !important;
+}
+#voucherView .promo-price{
+  font-size: clamp(28px, 8.5vw, 34px) !important;
+}
+#voucherView .promo-cta{
+  max-width:100% !important;
+  white-space:nowrap !important;
+}
+#voucherView .voucher-actions{
+  width:100% !important;
+}
+#voucherView .voucher-btn{
+  min-height:52px !important;
+}
+#voucherView .voucher-btn-primary,
+#voucherView .voucher-btn-ghost{
+  width:100% !important;
+}
+@media (max-width: 380px){
+  #voucherView .voucherBody{
+    padding-left:12px !important;
+    padding-right:12px !important;
+  }
+  #voucherView .share{
+    font-size: 15px !important;
+    gap:4px !important;
+  }
+  #voucherView .title{
+    font-size: 18px !important;
+  }
+  #voucherView .name{
+    font-size: 18px !important;
+  }
+  #voucherView .promo-wrap{
+    padding: 12px !important;
+  }
+  #voucherView .promo-left{
+    min-height: 108px !important;
+  }
+  #voucherView .promo-price{
+    font-size: 26px !important;
+  }
+  #voucherView .promo-cta{
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+  }
+}
+@media (max-width: 340px){
+  #voucherView .security-row,
+  #voucherView .header{
+    align-items:flex-start !important;
+  }
+  #voucherView .share{
+    font-size: 14px !important;
+  }
+  #voucherView .promo-text{
+    font-size: 10px !important;
+    line-height:1.2 !important;
+  }
+  #voucherView .promo-from{
+    font-size: 9px !important;
+  }
+  #voucherView .promo-price{
+    font-size: 24px !important;
+  }
+}
+</style>
 
 
 <style id="font-fix">
@@ -761,181 +1274,6 @@ h1,h2,h3,.title,.contact-name{
   setTimeout(run, 600);
   setTimeout(run, 1500);
   setTimeout(run, 3000);
-})();
-</script>
-
-
-<style id="global-safe-area-shell">
-:root{
-  --safe-area-top: env(safe-area-inset-top, 0px);
-  --safe-area-right: env(safe-area-inset-right, 0px);
-  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-area-left: env(safe-area-inset-left, 0px);
-  --app-shell-height: 100dvh;
-}
-html,body{
-  min-height:100%;
-  background:#742284;
-}
-body{
-  overflow:hidden;
-}
-.stage{
-  position:fixed;
-  inset:0;
-  height:var(--app-shell-height);
-  min-height:var(--app-shell-height);
-}
-#homeFrame,
-#loginFrame{
-  height:100%;
-}
-</style>
-<script id="global-safe-area-shell-script">
-(function(){
-  var DOC_STYLE_ID = 'global-safe-area-doc-style';
-  var DOC_META_ID = 'global-safe-area-meta';
-  var scheduled = false;
-
-  function setHeightVar(doc){
-    if(!doc || !doc.documentElement) return;
-    var win = doc.defaultView || window;
-    var vv = win.visualViewport;
-    var h = vv && vv.height ? vv.height : win.innerHeight;
-    doc.documentElement.style.setProperty('--app-shell-height', h + 'px');
-  }
-
-  function ensureViewportMeta(doc){
-    try{
-      if(!doc || !doc.head) return;
-      var meta = doc.head.querySelector('meta[name="viewport"]');
-      var content = 'width=device-width, initial-scale=1, viewport-fit=cover';
-      if(!meta){
-        meta = doc.createElement('meta');
-        meta.name = 'viewport';
-        meta.id = DOC_META_ID;
-        doc.head.appendChild(meta);
-      }
-      var current = meta.getAttribute('content') || '';
-      if(current.indexOf('viewport-fit=cover') === -1){
-        var cleaned = current ? current.replace(/\s+/g, ' ').trim().replace(/,+$/,'') : content;
-        if(cleaned){
-          if(cleaned.indexOf('width=device-width') === -1) cleaned = 'width=device-width, ' + cleaned;
-          if(cleaned.indexOf('initial-scale=1') === -1) cleaned += ', initial-scale=1';
-          cleaned += ', viewport-fit=cover';
-          meta.setAttribute('content', cleaned);
-        }else{
-          meta.setAttribute('content', content);
-        }
-      }
-    }catch(e){}
-  }
-
-  function injectStyle(doc){
-    if(!doc || !doc.documentElement) return;
-    ensureViewportMeta(doc);
-    setHeightVar(doc);
-    var style = doc.getElementById(DOC_STYLE_ID);
-    if(!style){
-      style = doc.createElement('style');
-      style.id = DOC_STYLE_ID;
-      style.textContent = [
-        ':root{--safe-area-top:env(safe-area-inset-top,0px);--safe-area-right:env(safe-area-inset-right,0px);--safe-area-bottom:env(safe-area-inset-bottom,0px);--safe-area-left:env(safe-area-inset-left,0px);--app-shell-height:100dvh;}',
-        'html,body{margin:0!important;width:100%!important;min-height:100%!important;height:100%!important;overflow-x:hidden!important;-webkit-text-size-adjust:100%;text-size-adjust:100%;}',
-        'body{background:inherit;}',
-        '.device,.views,.view,.screen,.app,.yApp,#appWrap,#homeView,#yapearView,#voucherView,#agregarContactoView,#qrRegView,#opcionesScreen{min-height:var(--app-shell-height)!important;}',
-        '.device,.views,.view,#homeView,#yapearView,#voucherView,#agregarContactoView,#qrRegView,#opcionesScreen{height:var(--app-shell-height)!important;}',
-        'iframe{max-width:100%!important;}',
-        '.yApp{background:#fff!important;}',
-        '.yHeader{padding-top:calc(18px + var(--safe-area-top))!important;min-height:calc(58px + var(--safe-area-top))!important;box-sizing:border-box!important;}',
-        '.ySearch{margin-top:12px!important;}',
-        '#opcionesScreen .opciones-wrapper{min-height:var(--app-shell-height)!important;padding-bottom:var(--safe-area-bottom)!important;box-sizing:border-box!important;}',
-        '.opciones-header{padding:calc(18px + var(--safe-area-top)) 18px 0!important;min-height:calc(230px + var(--safe-area-top))!important;height:calc(230px + var(--safe-area-top))!important;box-sizing:border-box!important;}',
-        '.back-opciones{top:calc(12px + var(--safe-area-top))!important;}',
-        '.opciones-update{top:calc(14px + var(--safe-area-top))!important;}',
-        '.opciones-hero-text{margin-top:calc(56px + var(--safe-area-top))!important;}',
-        '#voucherView .voucherBody{padding-top:calc(10px + var(--safe-area-top))!important;padding-bottom:calc(18px + var(--safe-area-bottom))!important;min-height:var(--app-shell-height)!important;box-sizing:border-box!important;}',
-        '#voucherView .container{padding-bottom:var(--safe-area-bottom)!important;}',
-        '.father,.father[_ngcontent-ng-c2185442285]{width:100%!important;min-height:var(--app-shell-height)!important;height:var(--app-shell-height)!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important;padding-bottom:calc(18vw + var(--safe-area-bottom))!important;box-sizing:border-box!important;background-color:#fff!important;}',
-        '.homehead,.homehead[_ngcontent-ng-c2185442285]{padding-top:var(--safe-area-top)!important;box-sizing:border-box!important;}',
-        '.homebienvenida,.homebienvenida[_ngcontent-ng-c2185442285]{min-height:calc(15vw + var(--safe-area-top))!important;padding-top:var(--safe-area-top)!important;box-sizing:border-box!important;align-items:center!important;}',
-        '.homefooter,.homefooter[_ngcontent-ng-c2185442285]{left:0!important;right:0!important;bottom:0!important;width:100%!important;height:calc(18vw + var(--safe-area-bottom))!important;padding-bottom:calc(max(2vh, 10px) + var(--safe-area-bottom))!important;box-sizing:border-box!important;}',
-        '.homemovimientos,.homemovimientos[_ngcontent-ng-c2185442285]{padding-bottom:calc(2vw + var(--safe-area-bottom))!important;}',
-        '.b-white-i,.b-white-i[_ngcontent-ng-c2185442285]{height:calc(52vw + var(--safe-area-bottom))!important;}',
-        '#qrScanView,.qrScan-wrap,.qrScan-bottom,#qrRegView,.qrReg-app{min-height:var(--app-shell-height)!important;}',
-        '.qrScan-bottom{padding-bottom:calc(var(--safe-area-bottom) + 12px)!important;}',
-        '@supports(height:100dvh){html,body,.device,.views,.view,.screen,.app,.yApp,#appWrap,#homeView,#yapearView,#voucherView,#agregarContactoView,#qrRegView,#opcionesScreen,.father{min-height:100dvh!important;}}'
-      ].join('');
-      (doc.head || doc.documentElement).appendChild(style);
-    }
-  }
-
-  function eachDoc(callback, rootDoc){
-    var doc = rootDoc || document;
-    try{ callback(doc); }catch(e){}
-    try{
-      var frames = doc.querySelectorAll('iframe');
-      frames.forEach(function(frame){
-        try{
-          var child = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
-          if(child && child !== doc) eachDoc(callback, child);
-        }catch(e){}
-      });
-    }catch(e){}
-  }
-
-  function applyAll(){ eachDoc(injectStyle); }
-
-  function schedule(){
-    if(scheduled) return;
-    scheduled = true;
-    requestAnimationFrame(function(){
-      scheduled = false;
-      applyAll();
-    });
-  }
-
-  function bindWindow(win){
-    if(!win || win.__safeAreaBound) return;
-    win.__safeAreaBound = true;
-    ['resize','orientationchange','pageshow'].forEach(function(evt){
-      try{ win.addEventListener(evt, schedule, { passive:true }); }catch(e){}
-    });
-    try{
-      if(win.visualViewport){
-        win.visualViewport.addEventListener('resize', schedule, { passive:true });
-        win.visualViewport.addEventListener('scroll', schedule, { passive:true });
-      }
-    }catch(e){}
-  }
-
-  function bindAllWindows(rootDoc){
-    var doc = rootDoc || document;
-    try{ bindWindow(doc.defaultView || window); }catch(e){}
-    try{
-      doc.querySelectorAll('iframe').forEach(function(frame){
-        try{
-          var child = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
-          if(child) bindAllWindows(child);
-          frame.addEventListener('load', function(){ setTimeout(schedule, 30); setTimeout(schedule, 180); setTimeout(schedule, 700); }, { passive:true });
-        }catch(e){}
-      });
-    }catch(e){}
-  }
-
-  function observe(doc){
-    try{
-      var mo = new MutationObserver(function(){ schedule(); });
-      mo.observe(doc.documentElement || doc.body, { childList:true, subtree:true, attributes:true });
-    }catch(e){}
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ bindAllWindows(); applyAll(); observe(document); setTimeout(schedule, 80); setTimeout(schedule, 300); setTimeout(schedule, 900); }, { once:true });
-  } else {
-    bindAllWindows(); applyAll(); observe(document); setTimeout(schedule, 80); setTimeout(schedule, 300); setTimeout(schedule, 900);
-  }
-  window.addEventListener('load', function(){ bindAllWindows(); schedule(); }, { once:true });
 })();
 </script>
 
@@ -24508,6 +24846,33 @@ body,
 </body>
 </html>
 
+<style id="ios-safe-header-fix-final">
+/* Ajuste final solo para iPhone / iOS Safari:
+   baja el header de vistas internas para que el botón volver
+   no quede pegado al notch o a la barra superior. */
+@supports (padding-top: env(safe-area-inset-top)) {
+  #yapearView .yApp{
+    min-height: 100dvh !important;
+    min-height: -webkit-fill-available !important;
+  }
+
+  #yapearView .yHeader{
+    padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-bottom: 12px !important;
+    min-height: calc(46px + env(safe-area-inset-top, 0px)) !important;
+    box-sizing: border-box !important;
+  }
+
+  #yapearView .yBack,
+  #yapearView .yClose,
+  #yapearView .yTitle{
+    position: relative;
+    top: 0 !important;
+  }
+}
+</style>
 
 
 <style id="top-buttons-final-fix">
