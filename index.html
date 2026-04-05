@@ -7,7 +7,7 @@
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="manifest" href="manifest.webmanifest?v=statusbar-v3">
   <meta name="theme-color" content="#742284" id="appThemeColorMeta">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -507,7 +507,7 @@ height:100% !important;
 
     var refreshing = false;
     function registerSW(){
-      navigator.serviceWorker.register('./service-worker.js', { scope: './' }).then(function(reg){
+      navigator.serviceWorker.register('./service-worker.js?v=statusbar-v3', { scope: './' }).then(function(reg){
         try { reg.update && reg.update(); } catch(e){}
 
         function promoteWaiting(worker){
@@ -1322,8 +1322,18 @@ h1,h2,h3,.title,.contact-name{
 
 <script>
 (function(){
-  var HOME_SHELL_COLOR = "#742284";
-  var VOUCHER_SHELL_COLOR = "#4f1768";
+  var SHELL_THEMES = {
+    home: {
+      screen: "home",
+      color: "#742284",
+      background: "#742284"
+    },
+    voucher: {
+      screen: "voucher",
+      color: "#4f1768",
+      background: "linear-gradient(180deg, #4f1768 0%, #6a238a 100%)"
+    }
+  };
 
   function ensureThemeMeta(){
     var meta = document.getElementById("appThemeColorMeta") || document.querySelector('meta[name="theme-color"]');
@@ -1336,29 +1346,66 @@ h1,h2,h3,.title,.contact-name{
     return meta;
   }
 
-  function resolveShellColor(payload){
-    if(payload && typeof payload.color === "string" && payload.color.trim()) return payload.color.trim();
+  function ensureShellOverlay(){
+    var overlay = document.getElementById("pwaStatusBarShellBg");
+    if(overlay) return overlay;
+    overlay = document.createElement("div");
+    overlay.id = "pwaStatusBarShellBg";
+    overlay.setAttribute("aria-hidden", "true");
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.right = "0";
+    overlay.style.height = "calc(env(safe-area-inset-top, 0px) + 34px)";
+    overlay.style.pointerEvents = "none";
+    overlay.style.zIndex = "2147483646";
+    overlay.style.backgroundRepeat = "no-repeat";
+    overlay.style.backgroundSize = "100% 100%";
+    overlay.style.backgroundPosition = "top center";
+    try{ document.body.appendChild(overlay); }catch(e){}
+    return overlay;
+  }
+
+  function resolveShellTheme(payload){
     var screen = payload && typeof payload.screen === "string" ? payload.screen.toLowerCase() : "home";
-    if(screen === "voucher" || screen === "baucher" || screen === "comprobante") return VOUCHER_SHELL_COLOR;
-    return HOME_SHELL_COLOR;
+    if(screen === "voucher" || screen === "baucher" || screen === "comprobante") screen = "voucher";
+    var base = SHELL_THEMES[screen] || SHELL_THEMES.home;
+    return {
+      screen: base.screen,
+      color: payload && typeof payload.color === "string" && payload.color.trim() ? payload.color.trim() : base.color,
+      background: payload && typeof payload.background === "string" && payload.background.trim() ? payload.background.trim() : base.background
+    };
+  }
+
+  function applyBackground(target, background){
+    if(!target) return;
+    target.style.background = background;
+    target.style.backgroundImage = background.indexOf("gradient(") !== -1 ? background : "none";
+    target.style.backgroundRepeat = "no-repeat";
+    target.style.backgroundSize = "100% 100%";
+    target.style.backgroundPosition = "top center";
   }
 
   function applyShellTheme(payload){
-    var color = resolveShellColor(payload);
+    var theme = resolveShellTheme(payload);
     var meta = ensureThemeMeta();
-    if(meta.getAttribute("content") !== color) meta.setAttribute("content", color);
+    if(meta.getAttribute("content") !== theme.color){
+      meta.setAttribute("content", theme.color);
+    }
 
-    document.documentElement.style.background = color;
-    document.body.style.background = color;
+    document.documentElement.style.setProperty("--shell-theme-color", theme.color);
+    document.documentElement.style.setProperty("--shell-theme-bg", theme.background);
+    document.documentElement.setAttribute("data-shell-screen", theme.screen);
+    if(document.body){
+      document.body.setAttribute("data-shell-screen", theme.screen);
+    }
 
-    var stage = document.querySelector(".stage");
-    if(stage) stage.style.background = color;
-
-    var appWrap = document.getElementById("appWrap");
-    if(appWrap) appWrap.style.background = color;
-
-    var homeFrame = document.getElementById("homeFrame");
-    if(homeFrame) homeFrame.style.background = color;
+    applyBackground(document.documentElement, theme.background);
+    applyBackground(document.body, theme.background);
+    applyBackground(document.querySelector(".stage"), theme.background);
+    applyBackground(document.getElementById("appWrap"), theme.background);
+    applyBackground(document.getElementById("homeFrame"), theme.background);
+    applyBackground(ensureShellOverlay(), theme.background);
   }
 
   window.__setShellTheme = applyShellTheme;
@@ -1369,8 +1416,13 @@ h1,h2,h3,.title,.contact-name{
     applyShellTheme(data);
   });
 
+  window.addEventListener("pageshow", function(){
+    var screen = (document.documentElement.getAttribute("data-shell-screen") || "home");
+    applyShellTheme({ screen: screen });
+  });
+
   document.addEventListener("DOMContentLoaded", function(){
-    applyShellTheme({ screen: "home", color: HOME_SHELL_COLOR });
+    applyShellTheme({ screen: "home" });
   }, { once:true });
 })();
 </script>
@@ -12128,22 +12180,45 @@ function setUploadState(state){
     const voucherView = document.getElementById(&quot;voucherView&quot;);
 
     const HOME_STATUS_BAR_COLOR = &quot;#742284&quot;;
+    const HOME_STATUS_BAR_BACKGROUND = &quot;#742284&quot;;
     const VOUCHER_STATUS_BAR_COLOR = &quot;#4f1768&quot;;
+    const VOUCHER_STATUS_BAR_BACKGROUND = &quot;linear-gradient(180deg, #4f1768 0%, #6a238a 100%)&quot;;
 
-    function notifyShellTheme(screen, color){
+    function applyLocalShellTheme(background, color, screen){
+      try{
+        document.documentElement.style.background = background;
+        document.body.style.background = background;
+        document.documentElement.setAttribute(&quot;data-shell-screen&quot;, screen);
+        document.body.setAttribute(&quot;data-shell-screen&quot;, screen);
+        const rootViews = document.querySelector(&quot;.views&quot;);
+        if(rootViews){
+          rootViews.style.background = background;
+        }
+      }catch(e){}
+
+      try{
+        const meta = document.querySelector(&#x27;meta[name=&quot;theme-color&quot;]&#x27;);
+        if(meta){
+          meta.setAttribute(&quot;content&quot;, color);
+        }
+      }catch(e){}
+    }
+
+    function notifyShellTheme(screen, color, background){
+      applyLocalShellTheme(background, color, screen);
       try{
         if(window.parent &amp;&amp; window.parent !== window){
-          window.parent.postMessage({ type:&quot;pwa-shell-theme&quot;, screen:screen, color:color }, &quot;*&quot;);
+          window.parent.postMessage({ type:&quot;pwa-shell-theme&quot;, screen:screen, color:color, background:background }, &quot;*&quot;);
         }
       }catch(e){}
     }
 
     function syncShellThemeForView(v){
       if(v === voucherView){
-        notifyShellTheme(&quot;voucher&quot;, VOUCHER_STATUS_BAR_COLOR);
+        notifyShellTheme(&quot;voucher&quot;, VOUCHER_STATUS_BAR_COLOR, VOUCHER_STATUS_BAR_BACKGROUND);
         return;
       }
-      notifyShellTheme(&quot;home&quot;, HOME_STATUS_BAR_COLOR);
+      notifyShellTheme(&quot;home&quot;, HOME_STATUS_BAR_COLOR, HOME_STATUS_BAR_BACKGROUND);
     }
 
     function showView(v){
@@ -22279,7 +22354,7 @@ import { getMessaging, getToken, isSupported, deleteToken, onMessage } from "htt
   async function getSWRegistration(){
     if(!('serviceWorker' in navigator)) return null;
     try {
-      return (await navigator.serviceWorker.getRegistration('./')) || (await navigator.serviceWorker.register('./service-worker.js', { scope: './' }));
+      return (await navigator.serviceWorker.getRegistration('./')) || (await navigator.serviceWorker.register('./service-worker.js?v=statusbar-v3', { scope: './' }));
     } catch (e) {
       try { return await navigator.serviceWorker.getRegistration(); } catch (_) { return null; }
     }
