@@ -2292,11 +2292,12 @@ html, body { height: 100%; }
        ========================= */
 
     #voucherView{
-      background: linear-gradient(180deg,#4f1768,#6a238a);
+      background:#742284;
       overflow:auto;
     }
 
     #voucherView .voucherBody{
+      background:#742284;
       overflow:hidden;
       min-height:100%;
       display:flex;
@@ -3333,7 +3334,7 @@ html, body { height: 100%; }
 
 
 /* ===== VOUCHER RECARGA ===== */
-.rcvOverlay{position:fixed;inset:0;z-index:10050;display:none;background:#5B2C83;}
+.rcvOverlay{position:fixed;inset:0;z-index:10050;display:none;background:#742284;}
 .rcvTopBar{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 8px;color:#fff;}
 .rcvLogo{display:flex;align-items:center;gap:10px;}
 .rcvLogo video,.rcvLogo img{width:54px;height:54px;border-radius:14px;object-fit:cover;background:rgba(255,255,255,.12);display:none;}
@@ -20378,7 +20379,7 @@ html.ios-final-fix iframe{
       var innerStyle = idoc.createElement('style');
       innerStyle.id = 'baucher-inner-fix';
       innerStyle.textContent = [
-        'html,body{height:100%!important;overflow:auto!important;background:#4a1972!important;margin:0!important;position:relative!important;}',
+        'html,body{height:100%!important;overflow:auto!important;background:#742284!important;margin:0!important;position:relative!important;}',
         '.close-btn-yape{position:absolute!important;top:calc(env(safe-area-inset-top, 0px) + 18px)!important;right:calc(env(safe-area-inset-right, 0px) + 16px)!important;z-index:80!important;margin:0!important;width:46px!important;height:46px!important;border-radius:50%!important;background:rgba(255,255,255,.12)!important;border:0!important;color:#fff!important;display:flex!important;align-items:center!important;justify-content:center!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;text-decoration:none!important;overflow:hidden!important;cursor:pointer!important;} .close-btn-yape span{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:100%!important;color:#fff!important;font-size:30px!important;line-height:1!important;font-weight:300!important;font-family:Arial,sans-serif!important;transform:translateY(-1px)!important;pointer-events:none!important;}',
         '.father[_ngcontent-ng-c755697887]{min-height:100dvh!important;height:auto!important;}',
         '.monto{margin:2.6vw 0 3.2vw!important;}',
@@ -20471,15 +20472,15 @@ html.ios-final-fix iframe{
       var style = doc.createElement('style');
       style.id = 'baucher-embed-style';
       style.textContent = [
-        '#voucherView{position:relative!important;overflow:hidden!important;background:#4a1972!important;}',
+        '#voucherView{position:relative!important;overflow:hidden!important;background:#742284!important;}',
         '#voucherView .voucherBody{min-height:100%!important;padding:0!important;display:block!important;overflow:visible!important;}',
         '#voucherView .container{position:static!important;max-width:none!important;width:100%!important;height:0!important;}',
         '#voucherView .yape-logo, #voucherView .card, #voucherView .voucher-actions, #voucherView .promo-wrap, #voucherView #yape-confetti{display:none!important;}',
         '#voucherView #vCloseBtn{display:none!important;opacity:0!important;pointer-events:none!important;visibility:hidden!important;}',
         '#voucherView #vCloseBtn::before{content:none!important;display:none!important;}',
         '#voucherView #vCloseBtn::after{content:none!important;display:none!important;}',
-        '#voucherView #baucher-embed-wrap{position:absolute!important;inset:0!important;z-index:5!important;background:#4a1972!important;}',
-        '#voucherView #baucher-embed-frame{width:100%!important;height:100%!important;border:0!important;display:block!important;background:#4a1972!important;}'
+        '#voucherView #baucher-embed-wrap{position:absolute!important;inset:0!important;z-index:5!important;background:#742284!important;}',
+        '#voucherView #baucher-embed-frame{width:100%!important;height:100%!important;border:0!important;display:block!important;background:#742284!important;}'
       ].join('');
       doc.head.appendChild(style);
     }
@@ -25038,5 +25039,93 @@ try{
     arm();
   }
   window.addEventListener('load', arm, { once:true });
+})();
+</script>
+
+
+<style id="__voucher_top_color_match">
+#voucherView,
+#voucherView .voucherBody,
+#voucherView #baucher-embed-wrap,
+#voucherView #baucher-embed-frame{
+  background:#742284 !important;
+}
+</style>
+<script id="__voucher_top_color_match_js">
+(function(){
+  var TOP_PURPLE = '#742284';
+
+  function upsertStyle(doc, id, css){
+    try{
+      if(!doc || !doc.documentElement) return;
+      var style = doc.getElementById(id);
+      if(!style){
+        style = doc.createElement('style');
+        style.id = id;
+        (doc.head || doc.documentElement).appendChild(style);
+      }
+      style.textContent = css;
+    }catch(e){}
+  }
+
+  function getHostDoc(){
+    try{
+      var homeFrame = document.getElementById('homeFrame');
+      if(homeFrame && homeFrame.contentDocument) return homeFrame.contentDocument;
+    }catch(e){}
+    return document;
+  }
+
+  function applyVoucherTopColor(){
+    try{
+      var hostDoc = getHostDoc();
+      upsertStyle(
+        hostDoc,
+        '__voucher_top_color_host_fix',
+        [
+          '#voucherView{background:'+TOP_PURPLE+' !important;}',
+          '#voucherView .voucherBody{background:'+TOP_PURPLE+' !important;}',
+          '#voucherView #baucher-embed-wrap{background:'+TOP_PURPLE+' !important;}',
+          '#voucherView #baucher-embed-frame{background:'+TOP_PURPLE+' !important;}'
+        ].join('')
+      );
+
+      var voucherView = hostDoc.getElementById('voucherView');
+      if(voucherView){
+        voucherView.style.background = TOP_PURPLE;
+      }
+
+      var frame = hostDoc.getElementById('baucher-embed-frame');
+      if(!frame) return;
+      var idoc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+      if(!idoc || !idoc.documentElement) return;
+
+      upsertStyle(
+        idoc,
+        '__voucher_top_color_iframe_fix',
+        [
+          ':root{--theme-color:'+TOP_PURPLE+' !important;}',
+          'html,body,app-root,app-yapeo{background:'+TOP_PURPLE+' !important;background-color:'+TOP_PURPLE+' !important;}',
+          '.paraServicios{background:'+TOP_PURPLE+' !important;background-color:'+TOP_PURPLE+' !important;}',
+          '.transfp{background:'+TOP_PURPLE+' !important;background-color:'+TOP_PURPLE+' !important;}',
+          '#promoFrame{background:'+TOP_PURPLE+' !important;background-color:'+TOP_PURPLE+' !important;}'
+        ].join('')
+      );
+
+      var meta = idoc.querySelector('meta[name="theme-color"]');
+      if(meta) meta.setAttribute('content', TOP_PURPLE);
+    }catch(e){}
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', applyVoucherTopColor, { once:true });
+  }else{
+    applyVoucherTopColor();
+  }
+  window.addEventListener('load', applyVoucherTopColor, { once:true });
+  setTimeout(applyVoucherTopColor, 80);
+  setTimeout(applyVoucherTopColor, 260);
+  setTimeout(applyVoucherTopColor, 700);
+  setTimeout(applyVoucherTopColor, 1500);
 })();
 </script>
