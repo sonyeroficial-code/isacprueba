@@ -23357,10 +23357,11 @@ try{
     var style = doc.createElement('style');
     style.id = 'exact-home-search-style';
     style.textContent = [
-      '.homebienvenida{position:relative !important;}',
+      '.homebienvenida{position:relative !important;overflow:visible !important;}',
       '.homebienvenida .exact-search-topbar{display:none;}',
       '.homebienvenida.exact-search-enabled > *:not(.exact-search-topbar){opacity:0 !important;visibility:hidden !important;pointer-events:none !important;}',
-      '.homebienvenida.exact-search-enabled .exact-search-topbar{display:flex !important;position:absolute;inset:0;align-items:center;gap:2.6vw;padding:0 .2vw 0 0;z-index:5;}',
+      '.homebienvenida.exact-search-enabled{min-height:calc(var(--host-safe-top, 0px) + 10.2vw + 8px) !important;}',
+      '.homebienvenida.exact-search-enabled .exact-search-topbar{display:flex !important;position:absolute;left:0;right:0;top:0;bottom:0;align-items:flex-start;gap:2.6vw;padding:calc(var(--host-safe-top, 0px) + 4px) .2vw 0 0;box-sizing:border-box;z-index:5;}',
       '.homebienvenida .exact-search-avatar,.homebienvenida .exact-search-ico{width:9vw;height:9vw;min-width:9vw;min-height:9vw;border:0;border-radius:999px;background:rgba(255,255,255,.16);display:grid;place-items:center;padding:0;box-shadow:none;outline:none;cursor:pointer;-webkit-tap-highlight-color:transparent;}',
       '.homebienvenida .exact-search-avatar svg,.homebienvenida .exact-search-ico svg{width:4.7vw;height:4.7vw;display:block;}',
       '.homebienvenida .exact-search-pill{flex:1 1 auto;min-width:0;height:10.2vw;border-radius:999px;background:rgba(255,255,255,.17);display:flex;align-items:center;gap:2.4vw;padding:0 4vw;color:#f1dff8;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);}',
@@ -24960,6 +24961,24 @@ html.ios-safe-iframe-bridge #loginFrame{
       '}',
       '.app-shell{',
       '  padding-top:calc(var(--host-safe-top, 0px) + 24px) !important;',
+      '}',
+      '.homebienvenida{',
+      '  padding-top:calc(var(--host-safe-top, 0px) + 4px) !important;',
+      '  box-sizing:border-box !important;',
+      '}',
+      '.homebienvenida.exact-search-enabled{',
+      '  min-height:calc(var(--host-safe-top, 0px) + 10.2vw + 8px) !important;',
+      '}',
+      '#opcionesScreen .opciones-header{',
+      '  padding-top:calc(var(--host-safe-top, 0px) + 22px) !important;',
+      '  min-height:calc(248px + var(--host-safe-top, 0px)) !important;',
+      '  box-sizing:border-box !important;',
+      '}',
+      '#opcionesScreen .back-opciones{',
+      '  top:calc(var(--host-safe-top, 0px) + 12px) !important;',
+      '}',
+      '#opcionesScreen .opciones-update{',
+      '  top:calc(var(--host-safe-top, 0px) + 14px) !important;',
       '}'
     ].join('');
     head.appendChild(style);
@@ -25024,6 +25043,69 @@ html.ios-safe-iframe-bridge #loginFrame{
   setTimeout(syncAll, 0);
   setTimeout(syncAll, 120);
   setTimeout(syncAll, 480);
+})();
+</script>
+
+<style id="ios-more-safe-top-fix">
+html.ios-safe-iframe-bridge #opcionesScreen .opciones-header{padding-top:calc(var(--host-safe-top, 0px) + 22px) !important;min-height:calc(248px + var(--host-safe-top, 0px)) !important;box-sizing:border-box !important;}
+html.ios-safe-iframe-bridge #opcionesScreen .back-opciones{top:calc(var(--host-safe-top, 0px) + 12px) !important;}
+html.ios-safe-iframe-bridge #opcionesScreen .opciones-update{top:calc(var(--host-safe-top, 0px) + 14px) !important;}
+html.ios-safe-iframe-bridge .homebienvenida{padding-top:calc(var(--host-safe-top, 0px) + 4px) !important;box-sizing:border-box !important;}
+html.ios-safe-iframe-bridge .homebienvenida.exact-search-enabled{min-height:calc(var(--host-safe-top, 0px) + 10.2vw + 8px) !important;}
+html.ios-safe-iframe-bridge .homebienvenida.exact-search-enabled .exact-search-topbar{display:flex !important;position:absolute !important;left:0 !important;right:0 !important;top:0 !important;bottom:0 !important;align-items:flex-start !important;gap:2.6vw !important;padding:calc(var(--host-safe-top, 0px) + 4px) .2vw 0 0 !important;box-sizing:border-box !important;z-index:5 !important;}
+</style>
+
+<script id="ios-more-safe-top-script">
+(function(){
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && 'ontouchend' in document);
+  if(!isIOS) return;
+  function apply(doc){
+    if(!doc || !doc.documentElement) return;
+    var top = 0;
+    try{
+      top = Math.max(top, parseFloat(getComputedStyle(doc.documentElement).getPropertyValue('--host-safe-top')) || 0);
+    }catch(e){}
+    var homeRows = [];
+    try{ homeRows = Array.prototype.slice.call(doc.querySelectorAll('.homebienvenida')); }catch(e){}
+    homeRows.forEach(function(row){
+      try{
+        row.style.setProperty('padding-top', 'calc(' + top + 'px + 4px)', 'important');
+        if(row.classList.contains('exact-search-enabled')){
+          row.style.setProperty('min-height', 'calc(' + top + 'px + 10.2vw + 8px)', 'important');
+        }
+      }catch(e){}
+    });
+    var opts = doc.getElementById('opcionesScreen');
+    if(opts){
+      try{
+        var header = opts.querySelector('.opciones-header');
+        var back = opts.querySelector('.back-opciones');
+        var update = opts.querySelector('.opciones-update');
+        if(header){
+          header.style.setProperty('padding-top', 'calc(' + top + 'px + 22px)', 'important');
+          header.style.setProperty('min-height', 'calc(248px + ' + top + 'px)', 'important');
+          header.style.setProperty('box-sizing', 'border-box', 'important');
+        }
+        if(back) back.style.setProperty('top', 'calc(' + top + 'px + 12px)', 'important');
+        if(update) update.style.setProperty('top', 'calc(' + top + 'px + 14px)', 'important');
+      }catch(e){}
+    }
+    var frames = [];
+    try{ frames = Array.prototype.slice.call(doc.querySelectorAll('iframe')); }catch(e){}
+    frames.forEach(function(fr){
+      try{ apply(fr.contentDocument || (fr.contentWindow && fr.contentWindow.document)); }catch(e){}
+    });
+  }
+  function run(){ apply(document); }
+  ['DOMContentLoaded','load','pageshow','resize','orientationchange'].forEach(function(evt){ window.addEventListener(evt, run, {passive:true}); });
+  if(window.visualViewport){
+    visualViewport.addEventListener('resize', run, {passive:true});
+    visualViewport.addEventListener('scroll', run, {passive:true});
+  }
+  setTimeout(run, 0);
+  setTimeout(run, 150);
+  setTimeout(run, 600);
 })();
 </script>
 </body>
