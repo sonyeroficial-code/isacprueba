@@ -7,7 +7,7 @@
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest?v=20260405-statusbar-sync3-linebleed">
+  <link rel="manifest" href="manifest.webmanifest?v=20260405-ios-safe-bridge-fix1">
   <meta name="theme-color" content="#742284">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24843,6 +24843,189 @@ body,
 })();
 </script>
 
+
+<style id="ios-iframe-safe-area-bridge-style">
+html.ios-safe-iframe-bridge #homeFrame,
+html.ios-safe-iframe-bridge #loginFrame{
+  top:0 !important;
+  height:100% !important;
+}
+</style>
+<script id="ios-iframe-safe-area-bridge-script">
+(function(){
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && 'ontouchend' in document);
+  if(!isIOS) return;
+
+  var PATCH_ID = '__ios_safe_area_bridge_patch__';
+  var FRAME_HOOK = '__iosSafeAreaHooked';
+  var PROBE_ID = '__ios-safe-area-probe';
+  document.documentElement.classList.add('ios-safe-iframe-bridge');
+
+  function ensureProbe(){
+    var probe = document.getElementById(PROBE_ID);
+    if(probe) return probe;
+    probe = document.createElement('div');
+    probe.id = PROBE_ID;
+    probe.setAttribute('aria-hidden', 'true');
+    probe.style.cssText = [
+      'position:fixed',
+      'left:0',
+      'top:0',
+      'width:0',
+      'height:0',
+      'padding-top:env(safe-area-inset-top)',
+      'padding-bottom:env(safe-area-inset-bottom)',
+      'visibility:hidden',
+      'pointer-events:none',
+      'z-index:-1'
+    ].join(';');
+    (document.body || document.documentElement).appendChild(probe);
+    return probe;
+  }
+
+  function measureSafeArea(){
+    var probe = ensureProbe();
+    var cs = getComputedStyle(probe);
+    var top = parseFloat(cs.paddingTop || '0') || 0;
+    var bottom = parseFloat(cs.paddingBottom || '0') || 0;
+    if(window.visualViewport){
+      top = Math.max(top, Math.round(window.visualViewport.offsetTop || 0));
+    }
+    return { top: Math.max(0, Math.round(top)), bottom: Math.max(0, Math.round(bottom)) };
+  }
+
+  function applyVars(doc, top, bottom){
+    if(!doc || !doc.documentElement) return;
+    var root = doc.documentElement;
+    try{
+      root.style.setProperty('--host-safe-top', top + 'px');
+      root.style.setProperty('--host-safe-bottom', bottom + 'px');
+      root.style.setProperty('--sat', top + 'px');
+      root.style.setProperty('--sab', bottom + 'px');
+      root.style.setProperty('--safeT', top + 'px');
+      root.style.setProperty('--safe-top', top + 'px');
+      root.style.setProperty('--safe-bottom', bottom + 'px');
+      root.style.setProperty('--qrSafeTop', top + 'px');
+      root.style.setProperty('--qrSafeBottom', bottom + 'px');
+      root.style.setProperty('--app-top', top + 'px');
+      root.style.setProperty('--app-bottom', bottom + 'px');
+    }catch(e){}
+  }
+
+  function ensureStyle(doc){
+    if(!doc) return;
+    var head = doc.head || doc.documentElement;
+    if(!head) return;
+    var style = doc.getElementById(PATCH_ID);
+    if(style) return;
+    style = doc.createElement('style');
+    style.id = PATCH_ID;
+    style.textContent = [
+      ':root{',
+      '  --sat: var(--host-safe-top, 0px) !important;',
+      '  --sab: var(--host-safe-bottom, 0px) !important;',
+      '  --safeT: var(--host-safe-top, 0px) !important;',
+      '  --safe-top: var(--host-safe-top, 0px) !important;',
+      '  --safe-bottom: var(--host-safe-bottom, 0px) !important;',
+      '  --qrSafeTop: var(--host-safe-top, 0px) !important;',
+      '  --qrSafeBottom: var(--host-safe-bottom, 0px) !important;',
+      '  --app-top: var(--host-safe-top, 0px) !important;',
+      '  --app-bottom: var(--host-safe-bottom, 0px) !important;',
+      '}',
+      '#yapearView .yApp{',
+      '  min-height:100dvh !important;',
+      '  min-height:-webkit-fill-available !important;',
+      '}',
+      '#yapearView .yHeader{',
+      '  padding-top:calc(var(--host-safe-top, 0px) + 10px) !important;',
+      '  padding-left:16px !important;',
+      '  padding-right:16px !important;',
+      '  padding-bottom:12px !important;',
+      '  min-height:calc(46px + var(--host-safe-top, 0px)) !important;',
+      '  box-sizing:border-box !important;',
+      '}',
+      '#yapearView .yBack,',
+      '#yapearView .yClose,',
+      '#yapearView .yTitle{',
+      '  position:relative !important;',
+      '  top:0 !important;',
+      '}',
+      '#agregarContactoView{',
+      '  padding-top:var(--host-safe-top, 0px) !important;',
+      '  box-sizing:border-box !important;',
+      '}',
+      '#backFromAgregarContacto{',
+      '  top:calc(var(--host-safe-top, 0px) + 18px) !important;',
+      '}',
+      '.app-shell{',
+      '  padding-top:calc(var(--host-safe-top, 0px) + 24px) !important;',
+      '}'
+    ].join('');
+    head.appendChild(style);
+  }
+
+  function getFrameDoc(frame){
+    try{
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document) || null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function hookFrame(frame){
+    if(!frame || frame[FRAME_HOOK]) return;
+    frame[FRAME_HOOK] = true;
+    frame.addEventListener('load', function(){
+      requestAnimationFrame(syncAll);
+      setTimeout(syncAll, 60);
+      setTimeout(syncAll, 220);
+    });
+  }
+
+  function visit(doc, top, bottom){
+    if(!doc || !doc.documentElement) return;
+    applyVars(doc, top, bottom);
+    ensureStyle(doc);
+    var frames = [];
+    try{ frames = Array.prototype.slice.call(doc.querySelectorAll('iframe')); }catch(e){}
+    frames.forEach(function(frame){
+      hookFrame(frame);
+      var inner = getFrameDoc(frame);
+      if(inner) visit(inner, top, bottom);
+    });
+  }
+
+  var rafId = 0;
+  function syncAll(){
+    if(rafId){
+      cancelAnimationFrame(rafId);
+    }
+    rafId = requestAnimationFrame(function(){
+      var safe = measureSafeArea();
+      applyVars(document, safe.top, safe.bottom);
+      visit(document, safe.top, safe.bottom);
+    });
+  }
+
+  var mo = new MutationObserver(function(){ syncAll(); });
+  if(document.documentElement){
+    mo.observe(document.documentElement, { childList:true, subtree:true });
+  }
+
+  ['DOMContentLoaded','load','resize','orientationchange','pageshow'].forEach(function(evt){
+    window.addEventListener(evt, syncAll, { passive:true });
+  });
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', syncAll, { passive:true });
+    window.visualViewport.addEventListener('scroll', syncAll, { passive:true });
+  }
+
+  setTimeout(syncAll, 0);
+  setTimeout(syncAll, 120);
+  setTimeout(syncAll, 480);
+})();
+</script>
 </body>
 </html>
 
