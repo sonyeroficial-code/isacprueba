@@ -3,11 +3,11 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest?v=20260405-statusbar-sync3-linebleed">
+  <link rel="manifest" href="manifest.webmanifest?v=20260405-safearea-global-clean">
   <meta name="theme-color" content="#742284">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1399,7 +1399,7 @@ h1,h2,h3,.title,.contact-name{
 &lt;html lang=&quot;es&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
-  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=overlays-content,maximum-scale=1.0,user-scalable=no&quot; /&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1, viewport-fit=cover&quot; /&gt;
   &lt;title&gt;Yape UI&lt;/title&gt;
   &lt;link rel=&quot;manifest&quot; href=&quot;manifest.json&quot;&gt;
   &lt;meta name=&quot;theme-color&quot; content=&quot;#ffffff&quot;&gt;
@@ -5020,7 +5020,7 @@ app-carousel .progress-bar{position:absolute;top:0;left:0;height:100%;width:0;ba
 &lt;html lang=&quot;es&quot;&gt;
 &lt;head&gt;
 &lt;meta charset=&quot;UTF-8&quot;&gt;
-&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, viewport-fit=cover&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1, viewport-fit=cover&quot; /&gt;
 &lt;title&gt;Mi Perfil&lt;/title&gt;
   &lt;link rel=&quot;manifest&quot; href=&quot;manifest.json&quot;&gt;
   &lt;meta name=&quot;theme-color&quot; content=&quot;#5B1FA6&quot;&gt;
@@ -8551,7 +8551,7 @@ body{
 &lt;html lang=&quot;es&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;utf-8&quot; /&gt;
-  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot; /&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1, viewport-fit=cover&quot; /&gt;
   &lt;title&gt;Guarda un contacto&lt;/title&gt;
   &lt;link rel=&quot;manifest&quot; href=&quot;manifest.json&quot;&gt;
   &lt;meta name=&quot;theme-color&quot; content=&quot;#5B1FA6&quot;&gt;
@@ -15779,7 +15779,7 @@ function setUploadState(state){
 &lt;html lang=&quot;es&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;UTF-8&quot; /&gt;
-  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot; /&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1, viewport-fit=cover&quot; /&gt;
   &lt;title&gt;Aprobar compras&lt;/title&gt;
   &lt;style&gt;
     :root{
@@ -16337,7 +16337,7 @@ function setUploadState(state){
 &lt;html lang=&quot;es&quot;&gt;
 &lt;head&gt;
   &lt;meta charset=&quot;UTF-8&quot; /&gt;
-  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, viewport-fit=cover&quot; /&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1, viewport-fit=cover&quot; /&gt;
   &lt;title&gt;Yape Tienda&lt;/title&gt;
   &lt;style&gt;
     :root{
@@ -24611,268 +24611,451 @@ try{
 </script>
 
 
-<style id="statusbar-surface-sync-style">
-:root{
-  --statusbar-surface:#742284;
-}
-html,
-body,
-#appWrap,
-.stage{
-  background-color:var(--statusbar-surface) !important;
-  background-image:none !important;
-  border:0 !important;
-  outline:none !important;
-  box-shadow:none !important;
-}
-#homeFrame,
-#loginFrame{
-  background:transparent !important;
-  border:0 !important;
-  outline:none !important;
-  box-shadow:none !important;
-  top:-2px !important;
-  height:calc(100% + 2px) !important;
-  clip-path:inset(0 0 0 0) !important;
-}
-#homeFrame{
-  z-index:1 !important;
-}
-</style>
-<script id="statusbar-surface-sync">
-(function(){
-  var HOME_FALLBACK = { color: '#742284' };
-  var VOUCHER_FALLBACK = { color: '#4A1972' };
-  var lastSignature = '';
-  var colorCanvas = document.createElement('canvas');
-  colorCanvas.width = 1;
-  colorCanvas.height = 1;
-  var colorCtx = colorCanvas.getContext('2d');
 
-  function visible(el){
-    if(!el || !el.ownerDocument || !el.ownerDocument.defaultView) return false;
-    var win = el.ownerDocument.defaultView;
+
+<style id="global-safe-area-foundation">
+  :root{
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    --app-viewport-height: 100dvh;
+    --app-viewport-width: 100vw;
+  }
+
+  html,
+  body{
+    min-height:100dvh;
+    min-height:var(--app-viewport-height, 100dvh);
+  }
+
+  #appWrap,
+  .stage{
+    min-height:var(--app-viewport-height, 100dvh);
+  }
+</style>
+<script id="global-safe-area-runtime">
+(function(){
+  var DOC_STYLE_ID = '__global_safe_area_doc_style';
+  var hookedDocs = new WeakSet();
+  var hookedFrames = new WeakSet();
+  var observers = new WeakMap();
+  var refreshQueued = false;
+
+  var ROOT_SELECTOR = [
+    'body',
+    '#appWrap',
+    '.stage',
+    '.device',
+    '.views',
+    '.view',
+    '.screen',
+    '.app',
+    '.yApp',
+    '.qrReg-app',
+    '.qrScan-wrap',
+    '#homeView',
+    '#yapearView',
+    '#voucherView',
+    '#qrScanView',
+    '#qrRegView'
+  ].join(',');
+
+  var CANDIDATE_SELECTOR = [
+    'header',
+    'footer',
+    '.homebienvenida',
+    '.homefooter',
+    '.yHeader',
+    '.yBack',
+    '.yClose',
+    '.yTitle',
+    '.qrScan-close',
+    '.qrScan-bottom',
+    '.qrReg-header',
+    '.opciones-header',
+    '.d-header',
+    '[class*="header"]',
+    '[class*="Header"]',
+    '[class*="footer"]',
+    '[class*="Footer"]',
+    '[class*="top"]',
+    '[class*="Top"]',
+    '[class*="bottom"]',
+    '[class*="Bottom"]',
+    '[class*="nav"]',
+    '[class*="Nav"]',
+    '[class*="tab"]',
+    '[class*="Tab"]',
+    '[class*="action"]',
+    '[class*="Action"]',
+    '[class*="toolbar"]',
+    '[class*="Toolbar"]',
+    '[id*="header"]',
+    '[id*="Header"]',
+    '[id*="footer"]',
+    '[id*="Footer"]',
+    '[id*="top"]',
+    '[id*="Top"]',
+    '[id*="bottom"]',
+    '[id*="Bottom"]',
+    '[style*="position:fixed"]',
+    '[style*="position: fixed"]',
+    '[style*="position:sticky"]',
+    '[style*="position: sticky"]',
+    '[style*="position:absolute"]',
+    '[style*="position: absolute"]',
+    '[style*="top:"]',
+    '[style*="bottom:"]'
+  ].join(',');
+
+  var SHARED_CSS = [
+    ':root{',
+    '  --safe-area-inset-top: env(safe-area-inset-top, 0px);',
+    '  --safe-area-inset-right: env(safe-area-inset-right, 0px);',
+    '  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);',
+    '  --safe-area-inset-left: env(safe-area-inset-left, 0px);',
+    '  --safe-top: var(--safe-area-inset-top);',
+    '  --safe-right: var(--safe-area-inset-right);',
+    '  --safe-bottom: var(--safe-area-inset-bottom);',
+    '  --safe-left: var(--safe-area-inset-left);',
+    '  --safeT: var(--safe-area-inset-top);',
+    '  --safeR: var(--safe-area-inset-right);',
+    '  --safeB: var(--safe-area-inset-bottom);',
+    '  --safeL: var(--safe-area-inset-left);',
+    '  --qrSafeTop: var(--safe-area-inset-top);',
+    '  --qrSafeBottom: var(--safe-area-inset-bottom);',
+    '  --app-viewport-height: 100dvh;',
+    '  --app-viewport-width: 100vw;',
+    '}',
+    'html, body{',
+    '  min-height:100dvh;',
+    '  min-height:var(--app-viewport-height, 100dvh);',
+    '}',
+    '[data-safe-viewport]{',
+    '  min-height:var(--app-viewport-height, 100dvh) !important;',
+    '}',
+    '[data-safe-fixed-fill]{',
+    '  height:var(--app-viewport-height, 100dvh) !important;',
+    '  min-height:var(--app-viewport-height, 100dvh) !important;',
+    '}',
+    '[data-safe-scroll]{',
+    '  scroll-padding-top:calc(var(--safe-area-inset-top, 0px) + var(--safe-scroll-top-offset, 0px)) !important;',
+    '  scroll-padding-bottom:calc(var(--safe-area-inset-bottom, 0px) + var(--safe-scroll-bottom-offset, 0px)) !important;',
+    '}',
+    '[data-safe-topbar]{',
+    '  box-sizing:border-box !important;',
+    '  padding-top:calc(var(--safe-base-pt, 0px) + var(--safe-area-inset-top, 0px)) !important;',
+    '  padding-left:calc(var(--safe-base-pl, 0px) + var(--safe-area-inset-left, 0px)) !important;',
+    '  padding-right:calc(var(--safe-base-pr, 0px) + var(--safe-area-inset-right, 0px)) !important;',
+    '  min-height:calc(var(--safe-base-height, 0px) + var(--safe-area-inset-top, 0px)) !important;',
+    '}',
+    '[data-safe-top-anchor]{',
+    '  top:calc(var(--safe-base-top, 0px) + var(--safe-area-inset-top, 0px)) !important;',
+    '}',
+    '[data-safe-bottombar]{',
+    '  box-sizing:border-box !important;',
+    '  padding-bottom:calc(var(--safe-base-pb, 0px) + var(--safe-area-inset-bottom, 0px)) !important;',
+    '  padding-left:calc(var(--safe-base-pl, 0px) + var(--safe-area-inset-left, 0px)) !important;',
+    '  padding-right:calc(var(--safe-base-pr, 0px) + var(--safe-area-inset-right, 0px)) !important;',
+    '  min-height:calc(var(--safe-base-height, 0px) + var(--safe-area-inset-bottom, 0px)) !important;',
+    '}',
+    '[data-safe-bottom-anchor]{',
+    '  bottom:calc(var(--safe-base-bottom, 0px) + var(--safe-area-inset-bottom, 0px)) !important;',
+    '}'
+  ].join('');
+
+  function number(value){
+    var parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function clampPx(value){
+    return Math.max(0, Math.round(number(value)));
+  }
+
+  function ensureProbe(){
+    var probe = document.getElementById('__safe_area_probe');
+    if (probe) return probe;
+    probe = document.createElement('div');
+    probe.id = '__safe_area_probe';
+    probe.setAttribute('aria-hidden', 'true');
+    probe.style.cssText = 'position:fixed;inset:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);';
+    document.documentElement.appendChild(probe);
+    return probe;
+  }
+
+  function topMetrics(){
+    var probe = ensureProbe();
+    var cs = window.getComputedStyle(probe);
+    var vv = window.visualViewport;
+    return {
+      top: clampPx(cs.paddingTop),
+      right: clampPx(cs.paddingRight),
+      bottom: clampPx(cs.paddingBottom),
+      left: clampPx(cs.paddingLeft),
+      width: clampPx(vv ? vv.width : window.innerWidth),
+      height: clampPx(vv ? vv.height : window.innerHeight)
+    };
+  }
+
+  function ensureStyle(doc){
+    try{
+      if (!doc || !doc.head || doc.getElementById(DOC_STYLE_ID)) return;
+      var style = doc.createElement('style');
+      style.id = DOC_STYLE_ID;
+      style.textContent = SHARED_CSS;
+      doc.head.appendChild(style);
+    }catch(e){}
+  }
+
+  function setVar(target, name, value){
+    try{ target.style.setProperty(name, value); }catch(e){}
+  }
+
+  function applyRootVars(doc, metrics){
+    try{
+      if (!doc || !doc.documentElement) return;
+      var root = doc.documentElement;
+      var frameEl = doc.defaultView && doc.defaultView.frameElement;
+      var rect = null;
+      try{ rect = frameEl ? frameEl.getBoundingClientRect() : null; }catch(e){}
+      var width = clampPx(rect && rect.width ? rect.width : metrics.width);
+      var height = clampPx(rect && rect.height ? rect.height : metrics.height);
+      setVar(root, '--safe-area-inset-top', metrics.top + 'px');
+      setVar(root, '--safe-area-inset-right', metrics.right + 'px');
+      setVar(root, '--safe-area-inset-bottom', metrics.bottom + 'px');
+      setVar(root, '--safe-area-inset-left', metrics.left + 'px');
+      setVar(root, '--safe-top', metrics.top + 'px');
+      setVar(root, '--safe-right', metrics.right + 'px');
+      setVar(root, '--safe-bottom', metrics.bottom + 'px');
+      setVar(root, '--safe-left', metrics.left + 'px');
+      setVar(root, '--safeT', metrics.top + 'px');
+      setVar(root, '--safeR', metrics.right + 'px');
+      setVar(root, '--safeB', metrics.bottom + 'px');
+      setVar(root, '--safeL', metrics.left + 'px');
+      setVar(root, '--qrSafeTop', metrics.top + 'px');
+      setVar(root, '--qrSafeBottom', metrics.bottom + 'px');
+      setVar(root, '--app-viewport-width', Math.max(1, width) + 'px');
+      setVar(root, '--app-viewport-height', Math.max(1, height) + 'px');
+    }catch(e){}
+  }
+
+  function isVisible(el, win){
+    if (!el || !win || !el.getBoundingClientRect) return false;
     var cs = win.getComputedStyle(el);
-    if(cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity || 1) === 0) return false;
+    if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity || 1) === 0) return false;
     var rect = el.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
   }
 
-  function getDoc(frame){
+  function nameBlob(el){
+    var cls = '';
+    try{ cls = typeof el.className === 'string' ? el.className : (el.className && el.className.baseVal) || ''; }catch(e){}
+    return ((el.id || '') + ' ' + cls + ' ' + (el.tagName || '')).toLowerCase();
+  }
+
+  function rememberBase(el, key, cssVar, value){
+    if (!el.dataset[key]){
+      el.dataset[key] = '1';
+      setVar(el, cssVar, Math.max(0, value) + 'px');
+    }
+  }
+
+  function markBaseSpacing(el, cs, rect){
+    rememberBase(el, 'safeBasePtInit', '--safe-base-pt', number(cs.paddingTop));
+    rememberBase(el, 'safeBasePbInit', '--safe-base-pb', number(cs.paddingBottom));
+    rememberBase(el, 'safeBasePlInit', '--safe-base-pl', number(cs.paddingLeft));
+    rememberBase(el, 'safeBasePrInit', '--safe-base-pr', number(cs.paddingRight));
+    rememberBase(el, 'safeBaseHeightInit', '--safe-base-height', rect.height);
+  }
+
+  function markTopBar(el, cs, rect){
+    markBaseSpacing(el, cs, rect);
+    el.setAttribute('data-safe-topbar', '');
+  }
+
+  function markBottomBar(el, cs, rect){
+    markBaseSpacing(el, cs, rect);
+    el.setAttribute('data-safe-bottombar', '');
+  }
+
+  function markTopAnchor(el, cs){
+    rememberBase(el, 'safeBaseTopInit', '--safe-base-top', number(cs.top));
+    el.setAttribute('data-safe-top-anchor', '');
+  }
+
+  function markBottomAnchor(el, cs){
+    rememberBase(el, 'safeBaseBottomInit', '--safe-base-bottom', number(cs.bottom));
+    el.setAttribute('data-safe-bottom-anchor', '');
+  }
+
+  function looksLikeTopBar(el, cs, rect, vw, vh){
+    var name = nameBlob(el);
+    if (rect.height < 28 || rect.height > Math.min(260, vh * 0.42)) return false;
+    if (/footer|bottom|tabbar|tab-bar|voucher-actions|sheet|modal/.test(name)) return false;
+    if (el.tagName === 'HEADER') return rect.top <= 56;
+    if (/header|topbar|navbar|titlebar|toolbar|bienvenida/.test(name)) return rect.top <= 64;
+    var atTop = rect.top <= 28;
+    var wide = rect.width >= vw * 0.55;
+    var displayOk = /flex|grid/.test(cs.display) || wide;
+    return atTop && wide && displayOk;
+  }
+
+  function looksLikeBottomBar(el, cs, rect, vw, vh){
+    var name = nameBlob(el);
+    if (rect.height < 36 || rect.height > Math.min(220, vh * 0.38)) return false;
+    if (/header|topbar|navbar|titlebar/.test(name)) return false;
+    if (/footer|bottom|tabbar|dock|actions|cta/.test(name)) return (vh - rect.bottom) <= 40;
+    return (/fixed|sticky/.test(cs.position) && (vh - rect.bottom) <= 20 && rect.width >= vw * 0.55);
+  }
+
+  function shouldOffsetTopAnchor(cs, rect, vh){
+    if (!/fixed|sticky|absolute/.test(cs.position)) return false;
+    if (rect.top > 42) return false;
+    if (rect.height >= vh * 0.75) return false;
+    return true;
+  }
+
+  function shouldOffsetBottomAnchor(cs, rect, vh){
+    if (!/fixed|sticky|absolute/.test(cs.position)) return false;
+    if ((vh - rect.bottom) > 42) return false;
+    if (rect.height >= vh * 0.75) return false;
+    return true;
+  }
+
+  function scanDoc(doc, metrics){
     try{
-      if(!frame) return null;
-      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document) || null;
-    }catch(e){
-      return null;
-    }
-  }
+      if (!doc || !doc.body || !doc.defaultView) return;
+      ensureStyle(doc);
+      applyRootVars(doc, metrics);
 
-  function ensureMeta(doc, name){
-    if(!doc || !doc.head) return null;
-    var meta = doc.head.querySelector('meta[name="' + name + '"]');
-    if(!meta){
-      meta = doc.createElement('meta');
-      meta.setAttribute('name', name);
-      doc.head.appendChild(meta);
-    }
-    return meta;
-  }
+      var win = doc.defaultView;
+      var rootRect = null;
+      try{ rootRect = (win.frameElement && win.frameElement.getBoundingClientRect()) || null; }catch(e){}
+      var vw = clampPx(rootRect && rootRect.width ? rootRect.width : win.innerWidth || doc.documentElement.clientWidth);
+      var vh = clampPx(rootRect && rootRect.height ? rootRect.height : win.innerHeight || doc.documentElement.clientHeight);
 
-  function normalizeColor(value){
-    if(!value) return '';
-    try{
-      colorCtx.fillStyle = '#000000';
-      colorCtx.fillStyle = value;
-      return colorCtx.fillStyle || '';
-    }catch(e){
-      return '';
-    }
-  }
-
-  function colorHasAlpha(value){
-    var match = String(value || '').match(/rgba\(([^)]+)\)/i);
-    if(!match) return false;
-    var parts = match[1].split(',').map(function(part){ return parseFloat(part.trim()); });
-    return parts.length === 4 && !isNaN(parts[3]) && parts[3] <= 0.001;
-  }
-
-  function isTransparent(value){
-    var normalized = normalizeColor(value);
-    return !normalized || normalized === 'transparent' || normalized === 'rgba(0, 0, 0, 0)' || colorHasAlpha(value);
-  }
-
-  function firstGradientColor(backgroundImage){
-    var image = String(backgroundImage || '');
-    if(!/gradient\(/i.test(image)) return '';
-    var match = image.match(/(#(?:[0-9a-f]{3,8})|rgba?\([^)]*\))/i);
-    return match ? normalizeColor(match[1]) : '';
-  }
-
-  function readPaintFrom(el){
-    var node = el;
-    while(node){
-      try{
-        var win = node.ownerDocument && node.ownerDocument.defaultView;
-        if(!win) break;
-        var cs = win.getComputedStyle(node);
-        var bgColor = cs.backgroundColor || '';
-        if(!isTransparent(bgColor)){
-          return { color:bgColor };
+      var rootNodes = [];
+      try{ rootNodes = Array.from(doc.querySelectorAll(ROOT_SELECTOR)); }catch(e){}
+      rootNodes.forEach(function(el){
+        if (el === doc.body || isVisible(el, win)) {
+          el.setAttribute('data-safe-viewport', '');
+          var cs = win.getComputedStyle(el);
+          if ((/fixed|absolute/.test(cs.position) || el.id === 'qrScanView' || el.id === 'voucherView') && el.getBoundingClientRect().height >= vh * 0.8) {
+            el.setAttribute('data-safe-fixed-fill', '');
+          }
+          if ((cs.overflowY === 'auto' || cs.overflowY === 'scroll') && el.getBoundingClientRect().height >= vh * 0.35) {
+            el.setAttribute('data-safe-scroll', '');
+          }
         }
-        var bgImage = cs.backgroundImage || 'none';
-        var gradientColor = firstGradientColor(bgImage);
-        if(gradientColor){
-          return { color:gradientColor };
+      });
+
+      var scrolling = doc.scrollingElement || doc.documentElement;
+      if (scrolling) scrolling.setAttribute('data-safe-scroll', '');
+
+      var candidates = [];
+      try{ candidates = Array.from(doc.querySelectorAll(CANDIDATE_SELECTOR)); }catch(e){}
+      candidates.forEach(function(el){
+        if (!isVisible(el, win)) return;
+        var rect = el.getBoundingClientRect();
+        var cs = win.getComputedStyle(el);
+
+        if ((cs.overflowY === 'auto' || cs.overflowY === 'scroll') && rect.height >= vh * 0.35) {
+          el.setAttribute('data-safe-scroll', '');
         }
-      }catch(e){}
-      node = node.parentElement;
-    }
-    return null;
-  }
 
-  function sampleSurface(doc, fallback){
-    fallback = fallback || HOME_FALLBACK;
-    if(!doc) return { color:fallback.color };
+        if ((/fixed|absolute/.test(cs.position) || el.id === 'qrScanView' || el.id === 'voucherView') && rect.height >= vh * 0.8 && rect.width >= vw * 0.8) {
+          el.setAttribute('data-safe-viewport', '');
+          el.setAttribute('data-safe-fixed-fill', '');
+        }
 
-    var root = doc.documentElement;
-    var body = doc.body;
-    var width = Math.max((root && root.clientWidth) || 0, (body && body.clientWidth) || 0, 1);
-    var height = Math.max((root && root.clientHeight) || 0, (body && body.clientHeight) || 0, 1);
-    var x = Math.max(1, Math.floor(width / 2));
-    var y = Math.max(1, Math.min(4, height - 1));
-    var el = null;
-
-    try{ el = doc.elementFromPoint(x, y); }catch(e){}
-    var paint = readPaintFrom(el) || readPaintFrom(body) || readPaintFrom(root) || { color:fallback.color };
-    var color = !isTransparent(paint.color) ? normalizeColor(paint.color) : '';
-    if(!color) color = fallback.color;
-    return { color:color };
-  }
-
-  function getActiveSurface(){
-    var homeFrame = document.getElementById('homeFrame');
-    var loginFrame = document.getElementById('loginFrame');
-    var homeDoc = visible(homeFrame) ? getDoc(homeFrame) : null;
-    if(homeDoc){
-      var voucherView = homeDoc.getElementById('voucherView');
-      var voucherFrame = homeDoc.getElementById('baucher-embed-frame');
-      if(voucherView && visible(voucherView) && !voucherView.classList.contains('hidden')){
-        return sampleSurface(getDoc(voucherFrame) || homeDoc, VOUCHER_FALLBACK);
-      }
-      var homeExactFrame = homeDoc.getElementById('homeExactFrame');
-      return sampleSurface(getDoc(homeExactFrame) || homeDoc, HOME_FALLBACK);
-    }
-    var loginDoc = visible(loginFrame) ? getDoc(loginFrame) : null;
-    return sampleSurface(loginDoc || document, HOME_FALLBACK);
-  }
-
-  function propagateThemeColor(color){
-    [document, getDoc(document.getElementById('homeFrame')), getDoc(getDoc(document.getElementById('homeFrame')) && getDoc(document.getElementById('homeFrame')).getElementById('homeExactFrame')), getDoc(getDoc(document.getElementById('homeFrame')) && getDoc(document.getElementById('homeFrame')).getElementById('baucher-embed-frame'))].forEach(function(docRef){
-      try{
-        var meta = ensureMeta(docRef, 'theme-color');
-        if(meta) meta.setAttribute('content', color);
-      }catch(e){}
-    });
-  }
-
-  function applySurface(surface){
-    var color = surface && surface.color ? surface.color : HOME_FALLBACK.color;
-    var signature = color;
-    if(signature === lastSignature) return;
-    lastSignature = signature;
-    document.documentElement.style.setProperty('--statusbar-surface', color);
-    var meta = ensureMeta(document, 'theme-color');
-    if(meta) meta.setAttribute('content', color);
-    propagateThemeColor(color);
-  }
-
-  var syncQueued = false;
-  function scheduleSync(){
-    if(syncQueued) return;
-    syncQueued = true;
-    requestAnimationFrame(function(){
-      syncQueued = false;
-      var homeDoc = getDoc(document.getElementById('homeFrame'));
-      bleedActiveFrame(homeDoc);
-      bleedActiveFrame(getDoc(homeDoc && homeDoc.getElementById && homeDoc.getElementById('homeExactFrame')));
-      applySurface(getActiveSurface());
-    });
+        if (looksLikeTopBar(el, cs, rect, vw, vh)) markTopBar(el, cs, rect);
+        if (looksLikeBottomBar(el, cs, rect, vw, vh)) markBottomBar(el, cs, rect);
+        if (shouldOffsetTopAnchor(cs, rect, vh)) markTopAnchor(el, cs);
+        if (shouldOffsetBottomAnchor(cs, rect, vh)) markBottomAnchor(el, cs);
+      });
+    }catch(e){}
   }
 
   function hookFrame(frame){
-    if(!frame || frame.__surfaceSyncHooked) return;
-    frame.__surfaceSyncHooked = true;
-    frame.addEventListener('load', function(){
-      scheduleSync();
-      setTimeout(scheduleSync, 80);
-      setTimeout(scheduleSync, 250);
-      setTimeout(scheduleSync, 700);
-    });
+    if (!frame || hookedFrames.has(frame)) return;
+    hookedFrames.add(frame);
+    frame.addEventListener('load', scheduleRefresh, { passive:true });
+    scheduleRefresh();
   }
 
-  hookFrame(document.getElementById('homeFrame'));
-  hookFrame(document.getElementById('loginFrame'));
+  function observeDoc(doc){
+    if (!doc || hookedDocs.has(doc)) return;
+    hookedDocs.add(doc);
+    ensureStyle(doc);
 
-  function bleedActiveFrame(doc){
-    if(!doc || !doc.getElementById) return;
-    ['homeExactFrame', 'baucher-embed-frame'].forEach(function(id){
+    try{
+      var win = doc.defaultView;
+      if (win){
+        win.addEventListener('resize', scheduleRefresh, { passive:true });
+        win.addEventListener('orientationchange', scheduleRefresh, { passive:true });
+        win.addEventListener('pageshow', scheduleRefresh, { passive:true });
+      }
+    }catch(e){}
+
+    if (!observers.has(doc)){
       try{
-        var frame = doc.getElementById(id);
-        if(!frame) return;
-        frame.style.setProperty('border', '0', 'important');
-        frame.style.setProperty('outline', 'none', 'important');
-        frame.style.setProperty('box-shadow', 'none', 'important');
-        frame.style.setProperty('top', '-2px', 'important');
-        frame.style.setProperty('height', 'calc(100% + 2px)', 'important');
-        frame.style.setProperty('background', 'transparent', 'important');
+        var observer = new MutationObserver(scheduleRefresh);
+        observer.observe(doc.documentElement || doc, { subtree:true, childList:true, attributes:true, attributeFilter:['class','style','hidden','open'] });
+        observers.set(doc, observer);
       }catch(e){}
-    });
+    }
+
+    try{ doc.querySelectorAll('iframe').forEach(hookFrame); }catch(e){}
   }
 
-  window.addEventListener('load', scheduleSync, { passive:true });
-  window.addEventListener('pageshow', scheduleSync, { passive:true });
-  window.addEventListener('resize', scheduleSync, { passive:true });
-  window.addEventListener('orientationchange', scheduleSync, { passive:true });
-  document.addEventListener('visibilitychange', scheduleSync, { passive:true });
+  function walkDocs(doc, metrics){
+    try{
+      if (!doc) return;
+      observeDoc(doc);
+      scanDoc(doc, metrics);
+      doc.querySelectorAll('iframe').forEach(function(frame){
+        hookFrame(frame);
+        try{
+          var child = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document) || null;
+          if (child) walkDocs(child, metrics);
+        }catch(e){}
+      });
+    }catch(e){}
+  }
 
-  setTimeout(scheduleSync, 0);
-  setTimeout(scheduleSync, 120);
-  setTimeout(scheduleSync, 400);
-  setTimeout(scheduleSync, 900);
-  setInterval(function(){ if(!document.hidden) scheduleSync(); }, 350);
+  function refreshAll(){
+    refreshQueued = false;
+    walkDocs(document, topMetrics());
+  }
+
+  function scheduleRefresh(){
+    if (refreshQueued) return;
+    refreshQueued = true;
+    requestAnimationFrame(refreshAll);
+  }
+
+  window.addEventListener('load', scheduleRefresh, { passive:true });
+  window.addEventListener('resize', scheduleRefresh, { passive:true });
+  window.addEventListener('orientationchange', scheduleRefresh, { passive:true });
+  window.addEventListener('pageshow', scheduleRefresh, { passive:true });
+  document.addEventListener('visibilitychange', scheduleRefresh, { passive:true });
+  if (window.visualViewport){
+    window.visualViewport.addEventListener('resize', scheduleRefresh, { passive:true });
+    window.visualViewport.addEventListener('scroll', scheduleRefresh, { passive:true });
+  }
+
+  scheduleRefresh();
+  setTimeout(scheduleRefresh, 120);
+  setTimeout(scheduleRefresh, 500);
+  setTimeout(scheduleRefresh, 1200);
 })();
 </script>
 
 </body>
 </html>
 
-<style id="ios-safe-header-fix-final">
-/* Ajuste final solo para iPhone / iOS Safari:
-   baja el header de vistas internas para que el botón volver
-   no quede pegado al notch o a la barra superior. */
-@supports (padding-top: env(safe-area-inset-top)) {
-  #yapearView .yApp{
-    min-height: 100dvh !important;
-    min-height: -webkit-fill-available !important;
-  }
-
-  #yapearView .yHeader{
-    padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-    padding-bottom: 12px !important;
-    min-height: calc(46px + env(safe-area-inset-top, 0px)) !important;
-    box-sizing: border-box !important;
-  }
-
-  #yapearView .yBack,
-  #yapearView .yClose,
-  #yapearView .yTitle{
-    position: relative;
-    top: 0 !important;
-  }
-}
-</style>
 
 
 <style id="top-buttons-final-fix">
