@@ -7,7 +7,7 @@
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest?v=20260405-safearea-shell-v2">
+  <link rel="manifest" href="manifest.webmanifest?v=20260405-safearea-shell-v3">
   <meta name="theme-color" content="#742284">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24392,6 +24392,37 @@ body,
     return null;
   }
 
+  function parseRgb(value){
+    var normalized = normalizeColor(value);
+    var match = normalized && normalized.match(/^rgba?\(([^)]+)\)$/i);
+    if(!match) return null;
+    var parts = match[1].split(',').map(function(part){ return parseFloat(part.trim()); });
+    if(parts.length < 3 || parts.some(function(n){ return isNaN(n); })) return null;
+    return { r:parts[0], g:parts[1], b:parts[2], a:parts.length > 3 && !isNaN(parts[3]) ? parts[3] : 1 };
+  }
+
+  function isLightNeutral(value){
+    var rgb = parseRgb(value);
+    if(!rgb || rgb.a <= 0.01) return false;
+    var max = Math.max(rgb.r, rgb.g, rgb.b);
+    var min = Math.min(rgb.r, rgb.g, rgb.b);
+    var luminance = (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
+    return luminance >= 0.82 && (max - min) <= 36;
+  }
+
+  function readSafeTop(doc){
+    try{
+      var win = doc && doc.defaultView;
+      var root = doc && doc.documentElement;
+      if(!win || !root) return 0;
+      var raw = win.getComputedStyle(root).getPropertyValue('--safe-area-top') || '0';
+      var n = parseFloat(raw);
+      return isNaN(n) ? 0 : Math.max(0, n);
+    }catch(e){
+      return 0;
+    }
+  }
+
   function sampleSurface(doc, fallback){
     fallback = fallback || HOME_FALLBACK;
     if(!doc) return { color:fallback.color };
@@ -24401,14 +24432,38 @@ body,
     var width = Math.max((root && root.clientWidth) || 0, (body && body.clientWidth) || 0, 1);
     var height = Math.max((root && root.clientHeight) || 0, (body && body.clientHeight) || 0, 1);
     var x = Math.max(1, Math.floor(width / 2));
-    var y = Math.max(1, Math.min(4, height - 1));
-    var el = null;
+    var safeTop = readSafeTop(doc);
+    var probeYs = [4, safeTop + 4, safeTop + 12, safeTop + 24, safeTop + 40, safeTop + 64, safeTop + 88].map(function(value){
+      return Math.max(1, Math.min(Math.round(value), height - 1));
+    });
+    var firstPaint = null;
 
-    try{ el = doc.elementFromPoint(x, y); }catch(e){}
-    var paint = readPaintFrom(el) || readPaintFrom(body) || readPaintFrom(root) || { color:fallback.color };
-    var color = !isTransparent(paint.color) ? normalizeColor(paint.color) : '';
-    if(!color) color = fallback.color;
-    return { color:color };
+    for(var i = 0; i < probeYs.length; i++){
+      var y = probeYs[i];
+      var el = null;
+      try{ el = doc.elementFromPoint(x, y); }catch(e){}
+      var paint = readPaintFrom(el) || null;
+      if(!paint || isTransparent(paint.color)) continue;
+      var color = normalizeColor(paint.color);
+      if(!color) continue;
+      if(!firstPaint) firstPaint = color;
+      if(!isLightNeutral(color)){
+        return { color:color };
+      }
+    }
+
+    var fallbackPaint = readPaintFrom(body) || readPaintFrom(root) || null;
+    var fallbackColor = fallbackPaint && !isTransparent(fallbackPaint.color) ? normalizeColor(fallbackPaint.color) : '';
+    if(fallbackColor && !isLightNeutral(fallbackColor)){
+      return { color:fallbackColor };
+    }
+    if(firstPaint){
+      return { color:firstPaint };
+    }
+    if(fallbackColor){
+      return { color:fallbackColor };
+    }
+    return { color:fallback.color };
   }
 
   function getActiveSurface(){
