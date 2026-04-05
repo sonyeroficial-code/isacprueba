@@ -1,5 +1,5 @@
 /* Yape PWA Service Worker - safe startup + offline support */
-const CACHE_VERSION = 'yape-shell-v20260405-statusbar-sync3-linebleed';
+const CACHE_VERSION = 'statusbar-surface-v4';
 const PRECACHE_NAME = `yape-precache-${CACHE_VERSION}`;
 const RUNTIME_NAME  = `yape-runtime-${CACHE_VERSION}`;
 

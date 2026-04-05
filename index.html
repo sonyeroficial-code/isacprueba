@@ -7,7 +7,7 @@
   <title>Yape</title>
   
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest?v=20260405-statusbar-sync3-linebleed">
+  <link rel="manifest" href="manifest.webmanifest?v=surfacefix4">
   <meta name="theme-color" content="#742284">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24611,235 +24611,161 @@ try{
 </script>
 
 
-<style id="statusbar-surface-sync-style">
-:root{
-  --statusbar-surface:#742284;
-}
-html,
-body,
-#appWrap,
-.stage{
-  background-color:var(--statusbar-surface) !important;
-  background-image:none !important;
-  border:0 !important;
-  outline:none !important;
-  box-shadow:none !important;
-}
-#homeFrame,
-#loginFrame{
-  background:transparent !important;
-  border:0 !important;
-  outline:none !important;
-  box-shadow:none !important;
-  top:-2px !important;
-  height:calc(100% + 2px) !important;
-  clip-path:inset(0 0 0 0) !important;
-}
-#homeFrame{
-  z-index:1 !important;
-}
-</style>
 <script id="statusbar-surface-sync">
 (function(){
-  var HOME_FALLBACK = { color: '#742284' };
-  var VOUCHER_FALLBACK = { color: '#4A1972' };
-  var lastSignature = '';
-  var colorCanvas = document.createElement('canvas');
-  colorCanvas.width = 1;
-  colorCanvas.height = 1;
-  var colorCtx = colorCanvas.getContext('2d');
+  var HOME_SURFACE = '#742284';
+  var VOUCHER_SURFACE = '#4f1768';
+  var OUTER_STYLE_ID = '__statusbar_surface_outer_style';
+  var INNER_STYLE_ID = '__statusbar_surface_inner_style';
+  var lastSurface = '';
 
-  function visible(el){
-    if(!el || !el.ownerDocument || !el.ownerDocument.defaultView) return false;
-    var win = el.ownerDocument.defaultView;
-    var cs = win.getComputedStyle(el);
-    if(cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity || 1) === 0) return false;
-    var rect = el.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0;
+  function ensureOuterStyle(){
+    if(document.getElementById(OUTER_STYLE_ID)) return;
+    var style = document.createElement('style');
+    style.id = OUTER_STYLE_ID;
+    style.textContent = [
+      ':root{--app-statusbar-surface:' + HOME_SURFACE + ';}',
+      'html,body,.stage{background:var(--app-statusbar-surface) !important;}',
+      '#homeFrame{display:block !important;background:var(--app-statusbar-surface) !important;top:-1px !important;height:calc(100% + 1px) !important;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;}',
+      '#loginFrame{display:block !important;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;}'
+    ].join('');
+    (document.head || document.documentElement).appendChild(style);
   }
 
-  function getDoc(frame){
+  function getHomeFrame(){
+    return document.getElementById('homeFrame');
+  }
+
+  function getHomeDoc(){
+    var frame = getHomeFrame();
+    if(!frame) return null;
     try{
-      if(!frame) return null;
       return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document) || null;
     }catch(e){
       return null;
     }
   }
 
-  function ensureMeta(doc, name){
-    if(!doc || !doc.head) return null;
-    var meta = doc.head.querySelector('meta[name="' + name + '"]');
-    if(!meta){
-      meta = doc.createElement('meta');
-      meta.setAttribute('name', name);
-      doc.head.appendChild(meta);
-    }
+  function ensureThemeMeta(doc){
+    var meta = doc.querySelector('meta[name="theme-color"]');
+    if(meta) return meta;
+    meta = doc.createElement('meta');
+    meta.setAttribute('name', 'theme-color');
+    (doc.head || doc.documentElement).appendChild(meta);
     return meta;
   }
 
-  function normalizeColor(value){
-    if(!value) return '';
+  function ensureInnerStyle(doc){
+    if(doc.getElementById(INNER_STYLE_ID)) return;
+    var style = doc.createElement('style');
+    style.id = INNER_STYLE_ID;
+    style.textContent = [
+      ':root{--statusbar-surface:' + HOME_SURFACE + ';}',
+      'html,body{background:var(--statusbar-surface) !important;}',
+      'body{margin:0 !important;padding:0 !important;}',
+      '.device,.views{background:var(--statusbar-surface) !important;}',
+      '.view{background:transparent !important;}',
+      '#homeView{background:' + HOME_SURFACE + ' !important;}',
+      '#voucherView{background:linear-gradient(180deg,' + VOUCHER_SURFACE + ' 0%, #6a238a 100%) !important;}',
+      '@media (pointer:coarse), (max-width:520px){body{background:var(--statusbar-surface) !important;}.device,.views{background:var(--statusbar-surface) !important;}}'
+    ].join('');
+    (doc.head || doc.documentElement).appendChild(style);
+  }
+
+  function isVisible(el, doc){
+    if(!el) return false;
+    if(el.classList && el.classList.contains('hidden')) return false;
     try{
-      colorCtx.fillStyle = '#000000';
-      colorCtx.fillStyle = value;
-      return colorCtx.fillStyle || '';
+      var cs = doc.defaultView.getComputedStyle(el);
+      return cs.display !== 'none' && cs.visibility !== 'hidden';
     }catch(e){
-      return '';
+      return true;
     }
   }
 
-  function colorHasAlpha(value){
-    var match = String(value || '').match(/rgba\(([^)]+)\)/i);
-    if(!match) return false;
-    var parts = match[1].split(',').map(function(part){ return parseFloat(part.trim()); });
-    return parts.length === 4 && !isNaN(parts[3]) && parts[3] <= 0.001;
+  function getActiveSurface(doc){
+    var voucherView = doc.getElementById('voucherView');
+    if(isVisible(voucherView, doc)) return { surface: VOUCHER_SURFACE, theme: VOUCHER_SURFACE };
+    return { surface: HOME_SURFACE, theme: HOME_SURFACE };
   }
 
-  function isTransparent(value){
-    var normalized = normalizeColor(value);
-    return !normalized || normalized === 'transparent' || normalized === 'rgba(0, 0, 0, 0)' || colorHasAlpha(value);
-  }
-
-  function firstGradientColor(backgroundImage){
-    var image = String(backgroundImage || '');
-    if(!/gradient\(/i.test(image)) return '';
-    var match = image.match(/(#(?:[0-9a-f]{3,8})|rgba?\([^)]*\))/i);
-    return match ? normalizeColor(match[1]) : '';
-  }
-
-  function readPaintFrom(el){
-    var node = el;
-    while(node){
-      try{
-        var win = node.ownerDocument && node.ownerDocument.defaultView;
-        if(!win) break;
-        var cs = win.getComputedStyle(node);
-        var bgColor = cs.backgroundColor || '';
-        if(!isTransparent(bgColor)){
-          return { color:bgColor };
-        }
-        var bgImage = cs.backgroundImage || 'none';
-        var gradientColor = firstGradientColor(bgImage);
-        if(gradientColor){
-          return { color:gradientColor };
-        }
-      }catch(e){}
-      node = node.parentElement;
+  function applySurface(doc){
+    ensureInnerStyle(doc);
+    var active = getActiveSurface(doc);
+    doc.documentElement.style.setProperty('--statusbar-surface', active.surface);
+    if(doc.body) doc.body.style.background = active.surface;
+    ensureThemeMeta(doc).setAttribute('content', active.theme);
+    if(active.surface !== lastSurface){
+      lastSurface = active.surface;
+      document.documentElement.style.setProperty('--app-statusbar-surface', active.surface);
+      document.body.style.background = active.surface;
+      var stage = document.querySelector('.stage');
+      if(stage) stage.style.background = active.surface;
+      var homeFrame = getHomeFrame();
+      if(homeFrame) homeFrame.style.background = active.surface;
+      var outerMeta = document.querySelector('meta[name="theme-color"]');
+      if(outerMeta) outerMeta.setAttribute('content', active.theme);
     }
-    return null;
   }
 
-  function sampleSurface(doc, fallback){
-    fallback = fallback || HOME_FALLBACK;
-    if(!doc) return { color:fallback.color };
-
-    var root = doc.documentElement;
-    var body = doc.body;
-    var width = Math.max((root && root.clientWidth) || 0, (body && body.clientWidth) || 0, 1);
-    var height = Math.max((root && root.clientHeight) || 0, (body && body.clientHeight) || 0, 1);
-    var x = Math.max(1, Math.floor(width / 2));
-    var y = Math.max(1, Math.min(4, height - 1));
-    var el = null;
-
-    try{ el = doc.elementFromPoint(x, y); }catch(e){}
-    var paint = readPaintFrom(el) || readPaintFrom(body) || readPaintFrom(root) || { color:fallback.color };
-    var color = !isTransparent(paint.color) ? normalizeColor(paint.color) : '';
-    if(!color) color = fallback.color;
-    return { color:color };
+  function bindInnerDoc(doc){
+    if(doc.documentElement.__statusbarSurfaceBound) return;
+    doc.documentElement.__statusbarSurfaceBound = true;
+    ensureInnerStyle(doc);
+    var rerun = function(){ try{ applySurface(doc); }catch(e){} };
+    try{
+      var observer = new MutationObserver(rerun);
+      observer.observe(doc.documentElement, { subtree:true, attributes:true, attributeFilter:['class','style'] });
+    }catch(e){}
+    doc.addEventListener('DOMContentLoaded', rerun, { passive:true });
+    doc.addEventListener('readystatechange', rerun, { passive:true });
+    doc.addEventListener('visibilitychange', rerun, { passive:true });
+    doc.addEventListener('transitionend', rerun, true);
+    doc.addEventListener('animationend', rerun, true);
   }
 
-  function getActiveSurface(){
-    var homeFrame = document.getElementById('homeFrame');
-    var loginFrame = document.getElementById('loginFrame');
-    var homeDoc = visible(homeFrame) ? getDoc(homeFrame) : null;
-    if(homeDoc){
-      var voucherView = homeDoc.getElementById('voucherView');
-      var voucherFrame = homeDoc.getElementById('baucher-embed-frame');
-      if(voucherView && visible(voucherView) && !voucherView.classList.contains('hidden')){
-        return sampleSurface(getDoc(voucherFrame) || homeDoc, VOUCHER_FALLBACK);
+  function sync(){
+    ensureOuterStyle();
+    var doc = getHomeDoc();
+    if(!doc || !doc.documentElement){
+      if(lastSurface !== HOME_SURFACE){
+        lastSurface = HOME_SURFACE;
+        document.documentElement.style.setProperty('--app-statusbar-surface', HOME_SURFACE);
+        var outerMeta = document.querySelector('meta[name="theme-color"]');
+        if(outerMeta) outerMeta.setAttribute('content', HOME_SURFACE);
       }
-      var homeExactFrame = homeDoc.getElementById('homeExactFrame');
-      return sampleSurface(getDoc(homeExactFrame) || homeDoc, HOME_FALLBACK);
+      return;
     }
-    var loginDoc = visible(loginFrame) ? getDoc(loginFrame) : null;
-    return sampleSurface(loginDoc || document, HOME_FALLBACK);
+    bindInnerDoc(doc);
+    applySurface(doc);
   }
 
-  function propagateThemeColor(color){
-    [document, getDoc(document.getElementById('homeFrame')), getDoc(getDoc(document.getElementById('homeFrame')) && getDoc(document.getElementById('homeFrame')).getElementById('homeExactFrame')), getDoc(getDoc(document.getElementById('homeFrame')) && getDoc(document.getElementById('homeFrame')).getElementById('baucher-embed-frame'))].forEach(function(docRef){
-      try{
-        var meta = ensureMeta(docRef, 'theme-color');
-        if(meta) meta.setAttribute('content', color);
-      }catch(e){}
-    });
+  function arm(){
+    sync();
+    setTimeout(sync, 60);
+    setTimeout(sync, 240);
+    setTimeout(sync, 800);
+    setTimeout(sync, 1600);
+    setTimeout(sync, 3200);
+    var frame = getHomeFrame();
+    if(frame && !frame.__statusbarSurfaceLoadBound){
+      frame.__statusbarSurfaceLoadBound = true;
+      frame.addEventListener('load', function(){
+        lastSurface = '';
+        setTimeout(sync, 0);
+        setTimeout(sync, 80);
+        setTimeout(sync, 280);
+        setTimeout(sync, 900);
+      });
+    }
   }
 
-  function applySurface(surface){
-    var color = surface && surface.color ? surface.color : HOME_FALLBACK.color;
-    var signature = color;
-    if(signature === lastSignature) return;
-    lastSignature = signature;
-    document.documentElement.style.setProperty('--statusbar-surface', color);
-    var meta = ensureMeta(document, 'theme-color');
-    if(meta) meta.setAttribute('content', color);
-    propagateThemeColor(color);
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', arm, { once:true });
+  }else{
+    arm();
   }
-
-  var syncQueued = false;
-  function scheduleSync(){
-    if(syncQueued) return;
-    syncQueued = true;
-    requestAnimationFrame(function(){
-      syncQueued = false;
-      var homeDoc = getDoc(document.getElementById('homeFrame'));
-      bleedActiveFrame(homeDoc);
-      bleedActiveFrame(getDoc(homeDoc && homeDoc.getElementById && homeDoc.getElementById('homeExactFrame')));
-      applySurface(getActiveSurface());
-    });
-  }
-
-  function hookFrame(frame){
-    if(!frame || frame.__surfaceSyncHooked) return;
-    frame.__surfaceSyncHooked = true;
-    frame.addEventListener('load', function(){
-      scheduleSync();
-      setTimeout(scheduleSync, 80);
-      setTimeout(scheduleSync, 250);
-      setTimeout(scheduleSync, 700);
-    });
-  }
-
-  hookFrame(document.getElementById('homeFrame'));
-  hookFrame(document.getElementById('loginFrame'));
-
-  function bleedActiveFrame(doc){
-    if(!doc || !doc.getElementById) return;
-    ['homeExactFrame', 'baucher-embed-frame'].forEach(function(id){
-      try{
-        var frame = doc.getElementById(id);
-        if(!frame) return;
-        frame.style.setProperty('border', '0', 'important');
-        frame.style.setProperty('outline', 'none', 'important');
-        frame.style.setProperty('box-shadow', 'none', 'important');
-        frame.style.setProperty('top', '-2px', 'important');
-        frame.style.setProperty('height', 'calc(100% + 2px)', 'important');
-        frame.style.setProperty('background', 'transparent', 'important');
-      }catch(e){}
-    });
-  }
-
-  window.addEventListener('load', scheduleSync, { passive:true });
-  window.addEventListener('pageshow', scheduleSync, { passive:true });
-  window.addEventListener('resize', scheduleSync, { passive:true });
-  window.addEventListener('orientationchange', scheduleSync, { passive:true });
-  document.addEventListener('visibilitychange', scheduleSync, { passive:true });
-
-  setTimeout(scheduleSync, 0);
-  setTimeout(scheduleSync, 120);
-  setTimeout(scheduleSync, 400);
-  setTimeout(scheduleSync, 900);
-  setInterval(function(){ if(!document.hidden) scheduleSync(); }, 350);
+  window.addEventListener('load', arm, { once:true });
 })();
 </script>
 
