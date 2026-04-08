@@ -4669,6 +4669,46 @@ app-carousel .progress-bar{position:absolute;top:0;left:0;height:100%;width:0;ba
               color: #b7b7b7;
               font-weight:500;
             }
+
+            /* Ajuste fino solo para nombre, título y botones de monto */
+            #montoView .mHeaderLikePhoto{ padding-right:72px !important; }
+            #montoView .mHeaderLikePhoto .mTitle{
+              font-size: clamp(18px, 4.8vw, 20px) !important;
+              line-height: 1.1 !important;
+              max-width: calc(100% - 92px) !important;
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: ellipsis !important;
+            }
+            #montoView #mNameBox{
+              max-width: 100% !important;
+              padding: 0 14px !important;
+              font-size: clamp(18px, 7vw, 22px) !important;
+              line-height: 1.15 !important;
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: ellipsis !important;
+            }
+            #montoView .mButtons{
+              display:flex !important;
+              gap:12px !important;
+            }
+            #montoView .mButtons .mBtn{
+              min-width: 0 !important;
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: ellipsis !important;
+              font-size: clamp(15px, 4.8vw, 18px) !important;
+              line-height: 1.1 !important;
+              padding: 14px 10px !important;
+            }
+            @media (max-width: 360px){
+              #montoView .mHeaderLikePhoto{ padding-right:64px !important; }
+              #montoView .mHeaderLikePhoto .mTitle{ font-size: 17px !important; }
+              #montoView #mNameBox{ padding: 0 10px !important; font-size: 18px !important; }
+              #montoView .mButtons{ gap:10px !important; }
+              #montoView .mButtons .mBtn{ font-size: 14px !important; padding: 14px 8px !important; }
+            }
           
 /* ===== FIX SCROLL MOVIMIENTOS ===== */
 .movList{
@@ -18724,10 +18764,68 @@ window.__YAPE_CONFETTI_DATA = {"v":"5.9.0","fr":40,"ip":0,"op":79,"w":375,"h":81
         if(el.dataset.pnEliteBound === '1') return;
         el.dataset.pnEliteBound = '1';
         el.style.cursor = 'pointer';
-        const handler = function(ev){ try{ ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); }catch(e){} try{ window.__openProgramarNotificacion(); }catch(e){} return false; };
-        el.addEventListener('click', handler, true);
-        el.addEventListener('pointerup', handler, true);
-        el.addEventListener('touchend', handler, true);
+        const TAP_MOVE_PX = 12;
+        const TAP_MAX_MS = 450;
+        let startX = 0;
+        let startY = 0;
+        let startTime = 0;
+        let moved = false;
+        let touchActive = false;
+        let lastOpenAt = 0;
+
+        function pointFromEvent(ev){
+          const src = (ev && ev.changedTouches && ev.changedTouches[0]) || (ev && ev.touches && ev.touches[0]) || ev || {};
+          return { x:Number(src.clientX || 0), y:Number(src.clientY || 0) };
+        }
+
+        function openPanelFromEvent(ev){
+          const now = Date.now();
+          if(now - lastOpenAt < 450) return false;
+          lastOpenAt = now;
+          try{ ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); }catch(e){}
+          try{ window.__openProgramarNotificacion(); }catch(e){}
+          return false;
+        }
+
+        function onStart(ev){
+          const p = pointFromEvent(ev);
+          startX = p.x;
+          startY = p.y;
+          startTime = Date.now();
+          moved = false;
+          touchActive = !!(ev && (ev.touches || ev.changedTouches));
+        }
+
+        function onMove(ev){
+          const p = pointFromEvent(ev);
+          if(Math.abs(p.x - startX) > TAP_MOVE_PX || Math.abs(p.y - startY) > TAP_MOVE_PX){
+            moved = true;
+          }
+        }
+
+        function onEnd(ev){
+          const elapsed = Date.now() - startTime;
+          if(moved || elapsed > TAP_MAX_MS) return true;
+          return openPanelFromEvent(ev);
+        }
+
+        function onClick(ev){
+          if(touchActive){
+            touchActive = false;
+            return true;
+          }
+          return openPanelFromEvent(ev);
+        }
+
+        el.addEventListener('touchstart', onStart, { capture:true, passive:true });
+        el.addEventListener('touchmove', onMove, { capture:true, passive:true });
+        el.addEventListener('touchcancel', function(){ moved = true; touchActive = false; }, { capture:true, passive:true });
+        el.addEventListener('touchend', onEnd, { capture:true, passive:false });
+        el.addEventListener('pointerdown', onStart, true);
+        el.addEventListener('pointermove', onMove, true);
+        el.addEventListener('pointercancel', function(){ moved = true; touchActive = false; }, true);
+        el.addEventListener('pointerup', onEnd, true);
+        el.addEventListener('click', onClick, true);
       });
       doc.querySelectorAll('iframe').forEach(function(fr){ try{ bindDoc(fr.contentDocument); fr.addEventListener('load', function(){ bindDoc(fr.contentDocument); }); }catch(e){} });
     }catch(e){}
@@ -25108,6 +25206,576 @@ html.ios-safe-iframe-bridge .homebienvenida.exact-search-enabled .exact-search-t
   setTimeout(run, 600);
 })();
 </script>
+
+<script id="scroll-safe-movimientos-patch">
+(function(){
+  var STYLE_ID = '__movimientos_scroll_safe_fix_style';
+  var SCRIPT_ID = '__movimientos_scroll_safe_fix_js';
+  var INNER_STYLE = [
+    '#yMovBody,.yMovBody,.movModalList,.movList{touch-action:pan-y !important;-webkit-overflow-scrolling:touch !important;overscroll-behavior:contain !important;}',
+    '.yMovRow,.movItem{touch-action:pan-y !important;}',
+    '.yMovOverlay,.movModal{overscroll-behavior:contain !important;}'
+  ].join('\n');
+  var INNER_JS = "(" + function(){
+    if(window.__movScrollTapSafeInstalled) return;
+    window.__movScrollTapSafeInstalled = true;
+
+    var state = {
+      tracking: false,
+      moved: false,
+      startX: 0,
+      startY: 0,
+      lastTarget: null,
+      movedAt: 0
+    };
+
+    function closestRow(node){
+      try{ return node && node.closest ? node.closest('.yMovRow, .movItem') : null; }catch(e){ return null; }
+    }
+
+    function pointFromEvent(ev){
+      if(ev && ev.touches && ev.touches.length) return ev.touches[0];
+      if(ev && ev.changedTouches && ev.changedTouches.length) return ev.changedTouches[0];
+      return ev || { clientX: 0, clientY: 0 };
+    }
+
+    function rememberSkip(row, shouldSkip){
+      if(!row) return;
+      try{
+        row.__movSkipNextClickUntil = shouldSkip ? (Date.now() + 900) : 0;
+      }catch(e){}
+    }
+
+    function start(ev){
+      var row = closestRow(ev.target);
+      if(!row) return;
+      var pt = pointFromEvent(ev);
+      state.tracking = true;
+      state.moved = false;
+      state.startX = Number(pt.clientX || 0);
+      state.startY = Number(pt.clientY || 0);
+      state.lastTarget = row;
+      state.movedAt = 0;
+      rememberSkip(row, false);
+    }
+
+    function move(ev){
+      if(!state.tracking) return;
+      var pt = pointFromEvent(ev);
+      var dx = Math.abs(Number(pt.clientX || 0) - state.startX);
+      var dy = Math.abs(Number(pt.clientY || 0) - state.startY);
+      if(dx > 10 || dy > 10){
+        state.moved = true;
+        state.movedAt = Date.now();
+      }
+    }
+
+    function end(ev){
+      if(!state.tracking) return;
+      var row = closestRow(ev.target) || state.lastTarget;
+      var shouldSkip = !!state.moved || ((Date.now() - Number(state.movedAt || 0)) < 80 && Number(state.movedAt || 0) > 0);
+      state.tracking = false;
+      state.lastTarget = row;
+      rememberSkip(row, shouldSkip);
+      if(shouldSkip){
+        try{
+          ev.stopPropagation();
+          if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+        }catch(e){}
+      }
+    }
+
+    function clickCapture(ev){
+      var row = closestRow(ev.target);
+      if(!row) return;
+      var until = Number(row.__movSkipNextClickUntil || 0);
+      if(until && Date.now() < until){
+        try{
+          ev.preventDefault();
+          ev.stopPropagation();
+          if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+        }catch(e){}
+        rememberSkip(row, false);
+      }
+    }
+
+    document.addEventListener('touchstart', start, { capture:true, passive:true });
+    document.addEventListener('pointerdown', start, true);
+    document.addEventListener('mousedown', start, true);
+
+    document.addEventListener('touchmove', move, { capture:true, passive:true });
+    document.addEventListener('pointermove', move, true);
+    document.addEventListener('mousemove', move, true);
+
+    document.addEventListener('touchend', end, true);
+    document.addEventListener('touchcancel', end, true);
+    document.addEventListener('pointerup', end, true);
+    document.addEventListener('pointercancel', end, true);
+    document.addEventListener('mouseup', end, true);
+    document.addEventListener('click', clickCapture, true);
+  }.toString() + ")();";
+
+  function injectInto(doc){
+    try{
+      if(!doc) return;
+      if(!doc.getElementById(STYLE_ID)){
+        var st = doc.createElement('style');
+        st.id = STYLE_ID;
+        st.textContent = INNER_STYLE;
+        (doc.head || doc.documentElement || doc.body).appendChild(st);
+      }
+      if(!doc.getElementById(SCRIPT_ID)){
+        var sc = doc.createElement('script');
+        sc.id = SCRIPT_ID;
+        sc.textContent = INNER_JS;
+        (doc.body || doc.documentElement || doc.head).appendChild(sc);
+      }
+    }catch(e){}
+  }
+
+  function walkFrames(doc){
+    try{
+      injectInto(doc);
+      var frames = doc.querySelectorAll ? doc.querySelectorAll('iframe') : [];
+      for(var i=0;i<frames.length;i++){
+        try{
+          var childDoc = frames[i].contentDocument || (frames[i].contentWindow && frames[i].contentWindow.document);
+          if(childDoc) walkFrames(childDoc);
+        }catch(e){}
+      }
+    }catch(e){}
+  }
+
+  function run(){
+    walkFrames(document);
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', run, { once:true });
+  }else{
+    run();
+  }
+  window.addEventListener('load', run, { once:true });
+  setTimeout(run, 120);
+  setTimeout(run, 600);
+  setTimeout(run, 1500);
+  setTimeout(run, 3000);
+  setInterval(run, 2500);
+})();
+</script>
+
+
+<script id="monto-phone-only-fix">
+(function(){
+  var STYLE_ID = 'monto-phone-only-style';
+  var HOOK_KEY = '__montoPhoneOnlyFixBound';
+
+  function css(){
+    return [
+      '@media (max-width: 430px){',
+      '  #montoView #mContent{position:absolute !important;top:0 !important;left:0 !important;right:0 !important;bottom:calc(var(--mFooterH, 156px) + env(safe-area-inset-bottom, 0px)) !important;padding:16px 16px 14px !important;overflow:auto !important;-webkit-overflow-scrolling:touch !important;background:#fff !important;}',
+      '  #montoView #mFooter{position:absolute !important;left:0 !important;right:0 !important;bottom:0 !important;width:100% !important;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px)) !important;background:#fff !important;transform:none !important;z-index:60 !important;}',
+      '  #montoView .mHeaderLikePhoto{padding-top:2px !important;}',
+      '  #montoView .mHeaderLikePhoto .mTitle{margin-left:12px !important;font-size:min(20px, 5.4vw) !important;}',
+      '  #montoView #mBack, #montoView #mClose{font-size:min(22px, 6vw) !important;line-height:1 !important;}',
+      '  #montoView #mNameBox{margin-top:12px !important;padding:0 8px !important;font-size:min(22px, 6vw) !important;line-height:1.15 !important;white-space:normal !important;overflow-wrap:anywhere !important;word-break:break-word !important;}',
+      '  #montoView .mPhoneWrap{margin-top:6px !important;}',
+      '  #montoView #mPhoneBox, #montoView #mPhoneInput{font-size:min(14px, 3.7vw) !important;}',
+      '  #montoView .mAmount{margin-top:30px !important;}',
+      '  #montoView #mAmountInput{padding:0 4px !important;font-size:min(82px, 22vw) !important;line-height:1 !important;}',
+      '  #montoView #mLimitPill{font-size:min(14px, 3.8vw) !important;line-height:1.35 !important;max-width:100% !important;}',
+      '  #montoView #mErrorPill{max-width:92% !important;line-height:1.25 !important;}',
+      '  #montoView #mMsgInput{font-size:min(14px, 3.8vw) !important;}',
+      '  #montoView .mButtons{gap:12px !important;}',
+      '  #montoView .mBtn{min-height:52px !important;padding:13px 10px !important;font-size:min(18px, 4.7vw) !important;}',
+      '  #mModal{padding:16px !important;background:rgba(0,0,0,.38) !important;}',
+      '  #mModal .mModalBox{width:280px !important;max-width:86vw !important;min-height:auto !important;padding:22px 20px !important;border-radius:16px !important;}',
+      '  #mModal .mModalBox > div > div:first-child{width:34px !important;height:34px !important;border-width:4px !important;border-top-width:4px !important;border-right-width:4px !important;}',
+      '  #mModal .mModalBox > div > div:last-child{font-size:20px !important;line-height:1.15 !important;}',
+      '}',
+      '@media (max-width: 360px){',
+      '  #montoView #mContent{padding-left:12px !important;padding-right:12px !important;}',
+      '  #montoView #mFooter{padding-left:12px !important;padding-right:12px !important;}',
+      '  #montoView .mHeaderLikePhoto .mTitle{margin-left:10px !important;font-size:19px !important;}',
+      '  #montoView #mNameBox{font-size:20px !important;}',
+      '  #montoView .mAmount{margin-top:22px !important;}',
+      '  #montoView #mAmountInput{font-size:min(72px, 20vw) !important;}',
+      '  #montoView .mButtons{gap:10px !important;}',
+      '  #montoView .mBtn{min-height:50px !important;padding:12px 8px !important;font-size:16px !important;}',
+      '  #mModal .mModalBox{width:262px !important;max-width:88vw !important;padding:20px 16px !important;}',
+      '  #mModal .mModalBox > div > div:last-child{font-size:18px !important;}',
+      '}',
+      '@media (max-height: 740px) and (max-width: 430px){',
+      '  #montoView .mAmount{margin-top:18px !important;}',
+      '  #montoView #mNameBox{margin-top:10px !important;}',
+      '}'
+    ].join('');
+  }
+
+  function syncFooter(doc){
+    try{
+      var root = doc.documentElement;
+      var footer = doc.getElementById('mFooter');
+      var content = doc.getElementById('mContent');
+      if(!root || !footer || !content) return;
+      var h = Math.ceil(footer.getBoundingClientRect().height || footer.offsetHeight || 0);
+      if(h > 0){
+        root.style.setProperty('--mFooterH', h + 'px');
+        if(doc.defaultView && doc.defaultView.innerWidth <= 430){
+          content.style.bottom = h + 'px';
+        }else{
+          content.style.bottom = '';
+        }
+      }
+    }catch(e){}
+  }
+
+  function install(doc){
+    try{
+      if(!doc || !doc.head || !doc.getElementById('montoView')) return false;
+      var style = doc.getElementById(STYLE_ID);
+      if(!style){
+        style = doc.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = css();
+        doc.head.appendChild(style);
+      }
+      syncFooter(doc);
+      var win = doc.defaultView;
+      if(!win || win[HOOK_KEY]) return true;
+      win[HOOK_KEY] = true;
+      var resync = function(){ syncFooter(doc); };
+      win.addEventListener('resize', resync, {passive:true});
+      win.addEventListener('orientationchange', resync, {passive:true});
+      if(win.visualViewport){ win.visualViewport.addEventListener('resize', resync, {passive:true}); }
+      ['focusin','focusout','input','click','touchend'].forEach(function(evt){
+        doc.addEventListener(evt, function(){ setTimeout(resync, 30); }, true);
+      });
+      setTimeout(resync, 80);
+      setTimeout(resync, 300);
+      setTimeout(resync, 900);
+      return true;
+    }catch(e){ return false; }
+  }
+
+  function run(){
+    try{
+      var frame = document.getElementById('homeFrame');
+      if(!frame) return false;
+      var doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+      return install(doc);
+    }catch(e){ return false; }
+  }
+
+  function boot(){
+    run();
+    setTimeout(run, 120);
+    setTimeout(run, 550);
+    setTimeout(run, 1400);
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
+  else boot();
+  window.addEventListener('load', boot, {once:true});
+  var frame = document.getElementById('homeFrame');
+  if(frame) frame.addEventListener('load', boot);
+  var tries = 0;
+  var timer = setInterval(function(){ tries += 1; if(run() && tries > 3) clearInterval(timer); if(tries > 18) clearInterval(timer); }, 1000);
+})();
+</script>
+
+
+<style id="monto-responsive-hard-fix">
+@media (max-width: 430px), (max-height: 740px){
+  #montoView .mApp{
+    height:100dvh !important;
+    min-height:100dvh !important;
+    position:relative !important;
+    overflow:hidden !important;
+    background:#fff !important;
+  }
+
+  #montoView #mContent{
+    position:absolute !important;
+    top:0 !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:calc(var(--mFooterH, 148px) + env(safe-area-inset-bottom, 0px)) !important;
+    padding:16px 14px 10px !important;
+    overflow:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+    background:#fff !important;
+  }
+
+  #montoView #mFooter{
+    position:absolute !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    width:100% !important;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+    background:#fff !important;
+    transform:none !important;
+    z-index:70 !important;
+  }
+
+  #montoView .mHeaderLikePhoto{
+    display:grid !important;
+    grid-template-columns:28px minmax(0,1fr) 28px !important;
+    align-items:center !important;
+    gap:8px !important;
+    padding-right:0 !important;
+  }
+
+  #montoView .mHeaderLikePhoto .mTitle{
+    margin-left:0 !important;
+    max-width:none !important;
+    min-width:0 !important;
+    font-size:clamp(18px, 5vw, 20px) !important;
+  }
+
+  #montoView #mBack,
+  #montoView #mClose{
+    font-size:22px !important;
+    line-height:1 !important;
+  }
+
+  #montoView #mNameBox{
+    margin-top:10px !important;
+    padding:0 8px !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    overflow-wrap:anywhere !important;
+    word-break:break-word !important;
+    font-size:clamp(18px, 6vw, 22px) !important;
+  }
+
+  #montoView .mPhoneWrap{
+    margin-top:4px !important;
+  }
+
+  #montoView .mAmount{
+    margin-top:18px !important;
+  }
+
+  #montoView #mAmountInput{
+    padding:0 4px !important;
+    font-size:min(68px, 18vw) !important;
+    line-height:1 !important;
+  }
+
+  #montoView #mLimitPill,
+  #montoView #mErrorPill{
+    max-width:100% !important;
+    line-height:1.35 !important;
+  }
+
+  #montoView #mMsgInput{
+    font-size:14px !important;
+  }
+
+  #montoView .mButtons{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    gap:10px !important;
+  }
+
+  #montoView .mButtons .mBtn{
+    min-width:0 !important;
+    min-height:48px !important;
+    padding:12px 8px !important;
+    font-size:15px !important;
+    line-height:1.15 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+}
+
+@media (max-width: 360px), (max-height: 680px){
+  #montoView #mContent{
+    padding-left:12px !important;
+    padding-right:12px !important;
+  }
+
+  #montoView #mFooter{
+    padding-left:12px !important;
+    padding-right:12px !important;
+  }
+
+  #montoView .mHeaderLikePhoto .mTitle{
+    font-size:18px !important;
+  }
+
+  #montoView #mAmountInput{
+    font-size:min(56px, 16vw) !important;
+  }
+
+  #montoView .mButtons{
+    grid-template-columns:minmax(0,1fr) !important;
+  }
+
+  #montoView #mOtherBanks,
+  #montoView #mYapearBtn{
+    width:100% !important;
+  }
+}
+</style>
+
+<script id="monto-responsive-hard-fix-js">
+(function(){
+  function getDoc(){
+    var frame = document.getElementById('homeFrame');
+    if(!frame) return null;
+    try{
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document) || null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function apply(doc){
+    if(!doc) return;
+    var root = doc.documentElement;
+    var footer = doc.getElementById('mFooter');
+    var content = doc.getElementById('mContent');
+    var amount = doc.getElementById('mAmountInput');
+    if(!root || !footer || !content) return;
+
+    var h = Math.ceil(footer.getBoundingClientRect().height || footer.offsetHeight || 0);
+    if(h > 0){
+      root.style.setProperty('--mFooterH', h + 'px');
+      content.style.bottom = h + 'px';
+    }
+
+    var vw = (doc.defaultView && doc.defaultView.innerWidth) || window.innerWidth || 390;
+    var vh = (doc.defaultView && doc.defaultView.innerHeight) || window.innerHeight || 844;
+    if(amount){
+      if(vw <= 360 || vh <= 680){
+        amount.style.fontSize = 'min(56px, 16vw)';
+      }else if(vw <= 430 || vh <= 740){
+        amount.style.fontSize = 'min(68px, 18vw)';
+      }
+    }
+  }
+
+  function boot(){
+    var doc = getDoc();
+    if(!doc) return;
+    apply(doc);
+    var win = doc.defaultView;
+    if(win && !win.__montoResponsiveHardFixBound){
+      win.__montoResponsiveHardFixBound = true;
+      var rerun = function(){ setTimeout(function(){ apply(doc); }, 30); };
+      win.addEventListener('resize', rerun, {passive:true});
+      win.addEventListener('orientationchange', rerun, {passive:true});
+      if(win.visualViewport){
+        win.visualViewport.addEventListener('resize', rerun, {passive:true});
+        win.visualViewport.addEventListener('scroll', rerun, {passive:true});
+      }
+      if('ResizeObserver' in win){
+        try{
+          var ro = new win.ResizeObserver(rerun);
+          var footer = doc.getElementById('mFooter');
+          if(footer) ro.observe(footer);
+        }catch(e){}
+      }
+      ['input','focusin','focusout','click','touchend'].forEach(function(evt){
+        doc.addEventListener(evt, rerun, true);
+      });
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot, {once:true});
+  }else{
+    boot();
+  }
+  window.addEventListener('load', boot, {once:true});
+  var frame = document.getElementById('homeFrame');
+  if(frame) frame.addEventListener('load', boot);
+  setTimeout(boot, 120);
+  setTimeout(boot, 600);
+  setTimeout(boot, 1400);
+})();
+</script>
+
+
+
+<style id="monto-emergency-host-style"></style>
+<script id="monto-emergency-host-script">
+(function(){
+  var STYLE_ID = '__monto_emergency_inner_fix_v1';
+  var CSS = [
+    'html, body{padding:0 !important; margin:0 !important; overflow-x:hidden !important;}',
+    'body{display:block !important;}',
+    '.device{width:100vw !important; max-width:100vw !important; min-width:100vw !important; height:100dvh !important; max-height:none !important; min-height:100dvh !important; border-radius:0 !important; box-shadow:none !important; margin:0 !important;}',
+    '.views, .view, #montoView, #montoView .mApp{width:100% !important; max-width:none !important;}',
+    '#montoView{position:absolute !important; inset:0 !important; background:#fff !important;}',
+    '#montoView .mApp{height:100dvh !important; min-height:100dvh !important; position:relative !important; overflow:hidden !important; background:#fff !important;}',
+    '#montoView #mContent{position:absolute !important; top:0 !important; left:0 !important; right:0 !important; bottom:calc(var(--mFooterH, 150px) + env(safe-area-inset-bottom, 0px)) !important; padding:16px 12px 10px !important; overflow:auto !important; -webkit-overflow-scrolling:touch !important; background:#fff !important;}',
+    '#montoView #mFooter{position:absolute !important; left:0 !important; right:0 !important; bottom:0 !important; width:100% !important; padding:12px 12px calc(12px + env(safe-area-inset-bottom, 0px)) !important; background:#fff !important; transform:none !important; z-index:90 !important;}',
+    '#montoView .mHeaderLikePhoto{display:grid !important; grid-template-columns:24px minmax(0,1fr) 24px !important; align-items:center !important; column-gap:10px !important; padding-right:0 !important;}',
+    '#montoView .mHeaderLikePhoto .mTitle{margin-left:0 !important; min-width:0 !important; max-width:none !important; font-size:clamp(16px, 4.8vw, 20px) !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;}',
+    '#montoView #mBack, #montoView #mClose{font-size:22px !important; line-height:1 !important;}',
+    '#montoView #mNameBox{margin-top:10px !important; padding:0 8px !important; font-size:clamp(18px, 5.8vw, 22px) !important; line-height:1.15 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;}',
+    '#montoView .mPhoneWrap{margin-top:4px !important;}',
+    '#montoView .mAmount{margin-top:18px !important;}',
+    '#montoView #mAmountInput{padding:0 4px !important; font-size:clamp(56px, 18vw, 72px) !important; line-height:1 !important;}',
+    '#montoView #mLimitPill{margin-top:10px !important; font-size:clamp(12px, 3.6vw, 14px) !important; line-height:1.3 !important; max-width:100% !important;}',
+    '#montoView #mErrorPill{max-width:94% !important; line-height:1.25 !important;}',
+    '#montoView #mMsgInput{font-size:14px !important;}',
+    '#montoView .mButtons{display:flex !important; gap:8px !important; align-items:stretch !important;}',
+    '#montoView .mButtons .mBtn{flex:1 1 0 !important; min-width:0 !important; height:50px !important; min-height:50px !important; max-height:50px !important; padding:0 8px !important; font-size:clamp(13.5px, 4vw, 16px) !important; line-height:1 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;}',
+    '@media (max-width: 340px){#montoView #mAmountInput{font-size:clamp(48px, 16vw, 62px) !important;} #montoView .mButtons{gap:6px !important;} #montoView .mButtons .mBtn{font-size:13px !important; padding:0 6px !important;}}'
+  ].join('\n');
+
+  function apply(doc){
+    if(!doc) return;
+    try{
+      var head = doc.head || doc.documentElement;
+      if(!head) return;
+      var style = doc.getElementById(STYLE_ID);
+      if(!style){
+        style = doc.createElement('style');
+        style.id = STYLE_ID;
+        head.appendChild(style);
+      }
+      if(style.textContent !== CSS) style.textContent = CSS;
+
+      var footer = doc.getElementById('mFooter');
+      var content = doc.getElementById('mContent');
+      if(footer && content){
+        var h = Math.ceil(footer.getBoundingClientRect().height || footer.offsetHeight || 0);
+        if(h > 0){
+          doc.documentElement.style.setProperty('--mFooterH', h + 'px');
+          content.style.bottom = h + 'px';
+        }
+      }
+    }catch(e){}
+  }
+
+  function run(){
+    try{
+      var frame = document.getElementById('homeFrame');
+      if(frame){
+        var doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+        apply(doc);
+      }
+      apply(document);
+    }catch(e){}
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, {once:true});
+  else run();
+  window.addEventListener('load', run, {once:true});
+  setTimeout(run, 80);
+  setTimeout(run, 300);
+  setTimeout(run, 900);
+})();
+</script>
+
 </body>
 </html>
 
@@ -25556,3 +26224,736 @@ html.ios-safe-iframe-bridge .homebienvenida.exact-search-enabled .exact-search-t
   }
 }
 </style>
+
+
+<script id="movimientos-overlay-direct-open-fix">
+(function(){
+  if(window.__movimientosOverlayDirectOpenFixInstalled) return;
+  window.__movimientosOverlayDirectOpenFixInstalled = true;
+
+  var INNER_CSS = [
+    '.yMovRow{cursor:pointer !important;pointer-events:auto !important;-webkit-tap-highlight-color:transparent;touch-action:pan-y !important;}',
+    '.yMovBody,.yMovOverlay,.yMovOverlay *{pointer-events:auto !important;}'
+  ].join('');
+
+  var INNER_JS = String.raw`(function(){
+    if(window.__movimientosOverlayDirectRowFixInstalledV2) return;
+    window.__movimientosOverlayDirectRowFixInstalledV2 = true;
+
+    function isRecargaMov(m){
+      var tipo = String(m && m.tipo || '').toLowerCase();
+      var code3 = String(m && m.code3 || '').toLowerCase();
+      var destino = String(m && m.destino || '').toLowerCase();
+      return tipo === 'recarga' || code3 === 'rcg' || destino.indexOf('recarga') !== -1;
+    }
+
+    function getMovs(){
+      try{ return (window.__yLoadMovs ? window.__yLoadMovs() : JSON.parse(localStorage.getItem('movimientos_v1') || '[]')) || []; }
+      catch(e){ return []; }
+    }
+
+    function applyFilter(list){
+      var f = window.__movFilter || 'all';
+      list = Array.isArray(list) ? list.slice() : [];
+      if(f === 'all') return list;
+      var now = new Date();
+      var today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      if(f === 'hoy'){
+        return list.filter(function(m){
+          var d = new Date(Number(m && m.ts || 0));
+          var day = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+          return day === today0;
+        });
+      }
+      var days = Number(f || 0);
+      if(!days || !isFinite(days)) return list;
+      var min = today0 - ((days - 1) * 86400000);
+      return list.filter(function(m){ return Number(m && m.ts || 0) >= min; });
+    }
+
+    function closeOverlayQuick(){
+      try{
+        var ov = document.getElementById('yMovOverlay');
+        if(!ov) return;
+        ov.classList.remove('show');
+        ov.classList.add('closing');
+        document.body.style.overflow = '';
+        setTimeout(function(){ try{ ov.classList.remove('closing'); }catch(e){} }, 420);
+      }catch(e){}
+    }
+
+    function openMovementDirect(m){
+      if(!m) return false;
+      try{
+        if(isRecargaMov(m) && typeof window.__openRecargaVoucherFromMov === 'function'){
+          window.__openRecargaVoucherFromMov(m);
+          closeOverlayQuick();
+          return true;
+        }
+      }catch(e){}
+      try{
+        if(typeof window.goVoucher === 'function'){
+          window.goVoucher({
+            nombre: m.nombre,
+            monto: Math.abs(Number(m && m.monto || 0)),
+            phone: m.phone || '',
+            destino: m.destino || 'Yape',
+            op8: m.op8 || '00000000',
+            code3: m.code3 || '000',
+            dateObj: new Date(Number(m && m.ts || Date.now())),
+            noLog: true,
+            fromMov: true,
+            promoSrc: m.promoSrc || '',
+            promoAlt: m.promoAlt || '',
+            msg: m.msg || '',
+            kind: m.kind || 'out'
+          });
+          closeOverlayQuick();
+          return true;
+        }
+      }catch(e){}
+      return false;
+    }
+
+    function findMovementFromRow(row){
+      if(!row) return null;
+      var idx = Number(row.getAttribute('data-idx') || -1);
+      if(isNaN(idx) || idx < 0) return null;
+      var filtered = applyFilter(getMovs());
+      return filtered[idx] || null;
+    }
+
+    function getScrollHost(row){
+      if(!row || !row.closest) return null;
+      return row.closest('#yMovBody, .yMovBody, #movList, .movList') || null;
+    }
+
+    var active = null;
+    var lastTouchHandledAt = 0;
+    var TAP_MAX_MOVE = 12;
+    var TAP_MAX_SCROLL = 6;
+    var TAP_MAX_MS = 700;
+
+    function getPoint(ev){
+      var t = null;
+      if(ev && ev.changedTouches && ev.changedTouches.length) t = ev.changedTouches[0];
+      else if(ev && ev.touches && ev.touches.length) t = ev.touches[0];
+      else t = ev;
+      if(!t) return null;
+      return { x: Number(t.clientX || 0), y: Number(t.clientY || 0) };
+    }
+
+    function resetActive(){ active = null; }
+
+    function onTouchStart(ev){
+      var row = ev && ev.target && ev.target.closest ? ev.target.closest('.yMovRow') : null;
+      if(!row) return;
+      var p = getPoint(ev);
+      if(!p) return;
+      var host = getScrollHost(row);
+      active = {
+        row: row,
+        host: host,
+        sx: p.x,
+        sy: p.y,
+        st: Date.now(),
+        scrollTop: host ? Number(host.scrollTop || 0) : 0,
+        moved: false
+      };
+    }
+
+    function onTouchMove(ev){
+      if(!active || !active.row) return;
+      var p = getPoint(ev);
+      if(!p) return;
+      if(Math.abs(p.x - active.sx) > TAP_MAX_MOVE || Math.abs(p.y - active.sy) > TAP_MAX_MOVE) active.moved = true;
+      if(active.host && Math.abs(Number(active.host.scrollTop || 0) - active.scrollTop) > TAP_MAX_SCROLL) active.moved = true;
+    }
+
+    function onTouchCancel(){
+      if(active && active.row) active.row.__ignoreClickUntil = Date.now() + 700;
+      resetActive();
+    }
+
+    function onTouchEnd(ev){
+      if(!active || !active.row) return;
+      var row = active.row;
+      if(active.host && Math.abs(Number(active.host.scrollTop || 0) - active.scrollTop) > TAP_MAX_SCROLL) active.moved = true;
+      var duration = Date.now() - active.st;
+      var shouldOpen = !active.moved && duration <= TAP_MAX_MS;
+      row.__ignoreClickUntil = Date.now() + 700;
+      if(!shouldOpen){
+        try{
+          ev.preventDefault();
+          ev.stopPropagation();
+          if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+        }catch(e){}
+        resetActive();
+        return;
+      }
+      lastTouchHandledAt = Date.now();
+      try{
+        ev.preventDefault();
+        ev.stopPropagation();
+        if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      }catch(e){}
+      openMovementDirect(findMovementFromRow(row));
+      resetActive();
+    }
+
+    function onClick(ev){
+      var row = ev && ev.target && ev.target.closest ? ev.target.closest('.yMovRow') : null;
+      if(!row) return;
+      var now = Date.now();
+      var ignoreUntil = Number(row.__ignoreClickUntil || 0);
+      if(ignoreUntil && now < ignoreUntil){
+        try{
+          ev.preventDefault();
+          ev.stopPropagation();
+          if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+        }catch(e){}
+        return;
+      }
+      if(now - lastTouchHandledAt < 700){
+        try{
+          ev.preventDefault();
+          ev.stopPropagation();
+          if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+        }catch(e){}
+        return;
+      }
+      try{
+        ev.preventDefault();
+        ev.stopPropagation();
+        if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      }catch(e){}
+      openMovementDirect(findMovementFromRow(row));
+    }
+
+    function bindBody(){
+      var body = document.getElementById('yMovBody');
+      if(!body || body.__directRowOpenBoundV2) return;
+      body.__directRowOpenBoundV2 = true;
+      body.addEventListener('touchstart', onTouchStart, { passive:true, capture:true });
+      body.addEventListener('touchmove', onTouchMove, { passive:true, capture:true });
+      body.addEventListener('touchend', onTouchEnd, { passive:false, capture:true });
+      body.addEventListener('touchcancel', onTouchCancel, { passive:true, capture:true });
+      body.addEventListener('click', onClick, true);
+      body.style.pointerEvents = 'auto';
+    }
+
+    function arm(){
+      bindBody();
+      try{
+        var ov = document.getElementById('yMovOverlay');
+        if(ov) ov.style.pointerEvents = ov.classList.contains('show') ? 'auto' : '';
+      }catch(e){}
+    }
+
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', arm, { once:true });
+    }else{
+      arm();
+    }
+    window.addEventListener('load', arm, { once:true });
+    setTimeout(arm, 120);
+    setTimeout(arm, 600);
+    setInterval(arm, 1200);
+  })();`;
+
+  function inject(homeDoc){
+    try{
+      if(!homeDoc) return;
+      if(!homeDoc.getElementById('__movimientos_overlay_direct_open_fix_css')){
+        var st = homeDoc.createElement('style');
+        st.id = '__movimientos_overlay_direct_open_fix_css';
+        st.textContent = INNER_CSS;
+        (homeDoc.head || homeDoc.documentElement || homeDoc.body).appendChild(st);
+      }
+      var oldScript = homeDoc.getElementById('__movimientos_overlay_direct_open_fix_js');
+      if(oldScript && oldScript.parentNode) oldScript.parentNode.removeChild(oldScript);
+      if(!homeDoc.getElementById('__movimientos_overlay_direct_open_fix_js_v2')){
+        var sc = homeDoc.createElement('script');
+        sc.id = '__movimientos_overlay_direct_open_fix_js_v2';
+        sc.textContent = INNER_JS;
+        (homeDoc.body || homeDoc.documentElement || homeDoc.head).appendChild(sc);
+      }
+    }catch(e){}
+  }
+
+  function run(){
+    try{
+      var frame = document.getElementById('homeFrame');
+      if(!frame) return;
+      var homeDoc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+      inject(homeDoc);
+    }catch(e){}
+  }
+
+  function arm(){
+    run();
+    try{
+      var frame = document.getElementById('homeFrame');
+      if(frame && !frame.__overlayDirectOpenFixLoadBoundV2){
+        frame.__overlayDirectOpenFixLoadBoundV2 = true;
+        frame.addEventListener('load', function(){ setTimeout(run, 60); setTimeout(run, 350); setTimeout(run, 1200); });
+      }
+    }catch(e){}
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', arm, { once:true });
+  }else{
+    arm();
+  }
+  window.addEventListener('load', arm, { once:true });
+  setTimeout(run, 80);
+  setTimeout(run, 500);
+  setTimeout(run, 1500);
+  setInterval(run, 2000);
+})();
+</script>
+
+
+<style id="monto-title-buttons-final-fix">
+@media (max-width: 430px){
+  #montoView .mHeaderLikePhoto{
+    display:grid !important;
+    grid-template-columns: 28px minmax(0,1fr) 28px !important;
+    align-items:center !important;
+    column-gap:10px !important;
+    padding-right:0 !important;
+  }
+  #montoView .mHeaderLikePhoto .mTitle{
+    margin-left:0 !important;
+    max-width:none !important;
+    min-width:0 !important;
+    font-size:clamp(16px, 4.6vw, 20px) !important;
+    line-height:1.1 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:clip !important;
+  }
+  #montoView .mButtons{
+    display:flex !important;
+    gap:10px !important;
+    align-items:stretch !important;
+  }
+  #montoView .mButtons .mBtn{
+    flex:1 1 0 !important;
+    min-width:0 !important;
+    height:52px !important;
+    min-height:52px !important;
+    max-height:52px !important;
+    padding:0 10px !important;
+    font-size:clamp(14px, 4.2vw, 17px) !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+}
+@media (max-width: 360px){
+  #montoView .mHeaderLikePhoto{
+    grid-template-columns: 24px minmax(0,1fr) 24px !important;
+    column-gap:8px !important;
+  }
+  #montoView .mHeaderLikePhoto .mTitle{
+    font-size:16px !important;
+  }
+  #montoView .mButtons{
+    gap:8px !important;
+  }
+  #montoView .mButtons .mBtn{
+    height:50px !important;
+    min-height:50px !important;
+    max-height:50px !important;
+    padding:0 8px !important;
+    font-size:13.5px !important;
+  }
+}
+</style>
+
+
+<style id="yapear-contactos-responsive-host-style">
+/* host placeholder for yapear contactos responsive patch */
+</style>
+<script id="yapear-contactos-responsive-host-script">
+(function(){
+  var STYLE_ID = '__yapear_contactos_responsive_patch_v1';
+  var CSS = [
+    '#yapearView .yApp{',
+    '  min-height:100dvh !important;',
+    '  min-height:-webkit-fill-available !important;',
+    '  height:100% !important;',
+    '  overflow-x:hidden !important;',
+    '  overflow-y:auto !important;',
+    '  -webkit-overflow-scrolling:touch !important;',
+    '  background:#fff !important;',
+    '}',
+    '#yapearView .yHeader{',
+    '  display:grid !important;',
+    '  grid-template-columns:auto minmax(0,1fr) auto !important;',
+    '  align-items:center !important;',
+    '  column-gap:clamp(8px, 2.8vw, 14px) !important;',
+    '  padding-top:calc(var(--host-safe-top, env(safe-area-inset-top, 0px)) + clamp(10px, 2.4vw, 14px)) !important;',
+    '  padding-right:clamp(14px, 4vw, 26px) !important;',
+    '  padding-bottom:clamp(10px, 2.6vw, 14px) !important;',
+    '  padding-left:clamp(14px, 4vw, 26px) !important;',
+    '  min-height:calc(50px + var(--host-safe-top, env(safe-area-inset-top, 0px))) !important;',
+    '  border-bottom:1px solid #ececec !important;',
+    '  box-sizing:border-box !important;',
+    '  background:#fff !important;',
+    '}',
+    '#yapearView .yBack,',
+    '#yapearView .yClose{',
+    '  width:clamp(28px, 8vw, 36px) !important;',
+    '  min-width:clamp(28px, 8vw, 36px) !important;',
+    '  height:clamp(28px, 8vw, 36px) !important;',
+    '  display:flex !important;',
+    '  align-items:center !important;',
+    '  justify-content:center !important;',
+    '  line-height:1 !important;',
+    '  font-size:clamp(22px, 6.3vw, 30px) !important;',
+    '  color:#6a6a6a !important;',
+    '  overflow:hidden !important;',
+    '}',
+    '#yapearView .yTitle{',
+    '  min-width:0 !important;',
+    '  font-size:clamp(18px, 5.8vw, 24px) !important;',
+    '  line-height:1.08 !important;',
+    '  white-space:nowrap !important;',
+    '  overflow:hidden !important;',
+    '  text-overflow:ellipsis !important;',
+    '  color:#222 !important;',
+    '}',
+    '#yapearView .ySearch{',
+    '  margin:clamp(12px, 3.2vw, 18px) clamp(14px, 4vw, 26px) !important;',
+    '  min-height:clamp(46px, 8.8vw, 58px) !important;',
+    '  padding:0 clamp(14px, 4vw, 18px) !important;',
+    '  gap:clamp(8px, 2.6vw, 12px) !important;',
+    '  border-radius:999px !important;',
+    '  box-sizing:border-box !important;',
+    '  background:#f3f3f3 !important;',
+    '}',
+    '#yapearView .ySearchIcon{',
+    '  flex:0 0 auto !important;',
+    '}',
+    '#yapearView .ySearchIconImg{',
+    '  width:clamp(18px, 4.8vw, 22px) !important;',
+    '  height:clamp(18px, 4.8vw, 22px) !important;',
+    '}',
+    '#yapearView #ySearchInput{',
+    '  min-width:0 !important;',
+    '  width:100% !important;',
+    '  font-size:clamp(14px, 4.2vw, 17px) !important;',
+    '  line-height:1.25 !important;',
+    '  color:#333 !important;',
+    '}',
+    '#yapearView #ySearchInput::placeholder{',
+    '  color:#8a8a8a !important;',
+    '  opacity:1 !important;',
+    '  text-overflow:ellipsis !important;',
+    '}',
+    '#yapearView #yContactsSection{',
+    '  padding-bottom:max(14px, var(--host-safe-bottom, env(safe-area-inset-bottom, 0px))) !important;',
+    '}',
+    '#yapearView .ySectionTitle{',
+    '  padding:clamp(18px, 5vw, 28px) clamp(14px, 4vw, 26px) clamp(12px, 3.5vw, 16px) !important;',
+    '  margin:0 !important;',
+    '  font-size:clamp(18px, 6vw, 24px) !important;',
+    '  line-height:1.15 !important;',
+    '  font-weight:700 !important;',
+    '  color:#111 !important;',
+    '}',
+    '#yapearView .yContact{',
+    '  padding:clamp(14px, 4vw, 20px) clamp(14px, 4vw, 26px) !important;',
+    '  min-height:clamp(92px, 16vw, 112px) !important;',
+    '  display:flex !important;',
+    '  flex-direction:column !important;',
+    '  justify-content:center !important;',
+    '  box-sizing:border-box !important;',
+    '  border-bottom:1px solid #ececec !important;',
+    '  background:#fff !important;',
+    '}',
+    '#yapearView .yContact .nm{',
+    '  font-size:clamp(16px, 5.6vw, 19px) !important;',
+    '  line-height:1.18 !important;',
+    '  font-weight:500 !important;',
+    '  color:#1f1f1f !important;',
+    '  overflow:hidden !important;',
+    '  text-overflow:ellipsis !important;',
+    '  white-space:nowrap !important;',
+    '}',
+    '#yapearView .yContact .nb{',
+    '  margin-top:clamp(6px, 1.8vw, 10px) !important;',
+    '  font-size:clamp(14px, 4.5vw, 16px) !important;',
+    '  line-height:1.18 !important;',
+    '  color:#7b7b7b !important;',
+    '  overflow:hidden !important;',
+    '  text-overflow:ellipsis !important;',
+    '  white-space:nowrap !important;',
+    '}',
+    '@media (max-width: 360px){',
+    '  #yapearView .yHeader{',
+    '    padding-right:14px !important;',
+    '    padding-left:14px !important;',
+    '  }',
+    '  #yapearView .yTitle{',
+    '    font-size:18px !important;',
+    '  }',
+    '  #yapearView .ySearch{',
+    '    margin-left:14px !important;',
+    '    margin-right:14px !important;',
+    '  }',
+    '  #yapearView .ySectionTitle{',
+    '    padding-left:14px !important;',
+    '    padding-right:14px !important;',
+    '  }',
+    '  #yapearView .yContact{',
+    '    padding-left:14px !important;',
+    '    padding-right:14px !important;',
+    '    min-height:88px !important;',
+    '  }',
+    '}',
+    '@media (min-width: 768px){',
+    '  #yapearView .yApp{',
+    '    max-width:100% !important;',
+    '  }',
+    '  #yapearView .ySearch,',
+    '  #yapearView .ySectionTitle,',
+    '  #yapearView .yContact,',
+    '  #yapearView .yHeader{',
+    '    padding-left:24px !important;',
+    '    padding-right:24px !important;',
+    '  }',
+    '  #yapearView .ySearch{',
+    '    margin-left:24px !important;',
+    '    margin-right:24px !important;',
+    '  }',
+    '}',
+    '@media (min-width: 1024px){',
+    '  #yapearView .yTitle{ font-size:24px !important; }',
+    '  #yapearView .ySectionTitle{ font-size:24px !important; }',
+    '}',
+    '@media (max-height: 700px){',
+    '  #yapearView .ySectionTitle{',
+    '    padding-top:16px !important;',
+    '    padding-bottom:12px !important;',
+    '  }',
+    '  #yapearView .yContact{',
+    '    min-height:84px !important;',
+    '  }',
+    '}'
+  ].join('\n');
+
+  function inject(doc){
+    if(!doc || !doc.documentElement) return;
+    try{
+      var head = doc.head || doc.documentElement;
+      if(!head) return;
+      var style = doc.getElementById(STYLE_ID);
+      if(!style){
+        style = doc.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = CSS;
+        head.appendChild(style);
+      } else if(style.textContent !== CSS){
+        style.textContent = CSS;
+      }
+    }catch(e){}
+
+    try{
+      Array.prototype.forEach.call(doc.querySelectorAll('iframe'), function(frame){
+        try{
+          if(!frame.__yapearResponsiveHooked){
+            frame.__yapearResponsiveHooked = true;
+            frame.addEventListener('load', function(){
+              setTimeout(run, 0);
+              setTimeout(run, 120);
+              setTimeout(run, 420);
+            });
+          }
+          var inner = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+          if(inner) inject(inner);
+        }catch(err){}
+      });
+    }catch(e){}
+  }
+
+  var mo;
+  function run(){
+    inject(document);
+    try{
+      if(!mo && document.documentElement){
+        mo = new MutationObserver(function(){ inject(document); });
+        mo.observe(document.documentElement, { childList:true, subtree:true });
+      }
+    }catch(e){}
+  }
+
+  ['DOMContentLoaded','load','pageshow','resize','orientationchange'].forEach(function(evt){
+    window.addEventListener(evt, run, {passive:true});
+  });
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', run, {passive:true});
+  }
+  setTimeout(run, 0);
+  setTimeout(run, 120);
+  setTimeout(run, 480);
+  setTimeout(run, 1200);
+})();
+</script>
+
+<style id="yapear-contactos-extra-narrow-host-style"></style>
+<script id="yapear-contactos-extra-narrow-host-script">
+(function(){
+  var STYLE_ID = '__yapear_contactos_responsive_patch_v2';
+  var CSS = [
+    '@media (max-width: 320px){',
+    '  #yapearView .yHeader{',
+    '    column-gap:8px !important;',
+    '    padding-top:calc(env(safe-area-inset-top, 0px) + 8px) !important;',
+    '    padding-right:10px !important;',
+    '    padding-bottom:10px !important;',
+    '    padding-left:10px !important;',
+    '    min-height:44px !important;',
+    '  }',
+    '  #yapearView .yBack,',
+    '  #yapearView .yClose{',
+    '    width:24px !important;',
+    '    min-width:24px !important;',
+    '    height:24px !important;',
+    '    font-size:18px !important;',
+    '  }',
+    '  #yapearView .yTitle{',
+    '    font-size:15px !important;',
+    '    line-height:1.05 !important;',
+    '    letter-spacing:0 !important;',
+    '  }',
+    '  #yapearView .ySearch{',
+    '    margin:10px 10px 0 !important;',
+    '    min-height:42px !important;',
+    '    padding:0 12px !important;',
+    '    gap:8px !important;',
+    '  }',
+    '  #yapearView .ySearchIconImg{',
+    '    width:16px !important;',
+    '    height:16px !important;',
+    '  }',
+    '  #yapearView #ySearchInput{',
+    '    font-size:12.5px !important;',
+    '  }',
+    '  #yapearView #ySearchInput::placeholder{',
+    '    font-size:12.5px !important;',
+    '  }',
+    '  #yapearView .ySectionTitle{',
+    '    padding:14px 10px 10px !important;',
+    '    font-size:16px !important;',
+    '    line-height:1.05 !important;',
+    '  }',
+    '  #yapearView .yContact{',
+    '    padding:12px 10px !important;',
+    '    min-height:72px !important;',
+    '  }',
+    '  #yapearView .yContact .nm{',
+    '    font-size:14px !important;',
+    '  }',
+    '  #yapearView .yContact .nb{',
+    '    margin-top:4px !important;',
+    '    font-size:12px !important;',
+    '  }',
+    '}',
+    '@media (max-width: 280px){',
+    '  #yapearView .yHeader{',
+    '    padding-right:8px !important;',
+    '    padding-left:8px !important;',
+    '    column-gap:6px !important;',
+    '  }',
+    '  #yapearView .yTitle{',
+    '    font-size:14px !important;',
+    '  }',
+    '  #yapearView .ySearch{',
+    '    margin-left:8px !important;',
+    '    margin-right:8px !important;',
+    '    min-height:40px !important;',
+    '    padding:0 10px !important;',
+    '  }',
+    '  #yapearView #ySearchInput,',
+    '  #yapearView #ySearchInput::placeholder{',
+    '    font-size:11.5px !important;',
+    '  }',
+    '  #yapearView .ySectionTitle{',
+    '    padding-left:8px !important;',
+    '    padding-right:8px !important;',
+    '    font-size:15px !important;',
+    '  }',
+    '  #yapearView .yContact{',
+    '    padding-left:8px !important;',
+    '    padding-right:8px !important;',
+    '  }',
+    '  #yapearView .yContact .nm{',
+    '    font-size:13px !important;',
+    '  }',
+    '  #yapearView .yContact .nb{',
+    '    font-size:11px !important;',
+    '  }',
+    '}'
+  ].join('\n');
+
+  function inject(doc){
+    if(!doc || !doc.documentElement) return;
+    try{
+      var head = doc.head || doc.documentElement;
+      var style = doc.getElementById(STYLE_ID);
+      if(!style){
+        style = doc.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = CSS;
+        head.appendChild(style);
+      }else if(style.textContent !== CSS){
+        style.textContent = CSS;
+      }
+    }catch(e){}
+
+    try{
+      Array.prototype.forEach.call(doc.querySelectorAll('iframe'), function(frame){
+        try{
+          if(!frame.__yapearResponsiveHookedV2){
+            frame.__yapearResponsiveHookedV2 = true;
+            frame.addEventListener('load', function(){
+              setTimeout(run, 0);
+              setTimeout(run, 120);
+              setTimeout(run, 420);
+            });
+          }
+          var inner = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+          if(inner) inject(inner);
+        }catch(err){}
+      });
+    }catch(e){}
+  }
+
+  var mo;
+  function run(){
+    inject(document);
+    try{
+      if(!mo && document.documentElement){
+        mo = new MutationObserver(function(){ inject(document); });
+        mo.observe(document.documentElement, { childList:true, subtree:true });
+      }
+    }catch(e){}
+  }
+
+  ['DOMContentLoaded','load','pageshow','resize','orientationchange'].forEach(function(evt){
+    window.addEventListener(evt, run, {passive:true});
+  });
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', run, {passive:true});
+  }
+  setTimeout(run, 0);
+  setTimeout(run, 120);
+  setTimeout(run, 480);
+  setTimeout(run, 1200);
+})();
+</script>
